@@ -1070,6 +1070,7 @@ const List<Term> sampleTerms = [
         'دائرة إلكترونية تزيد قدرة أو جهد أو شدة إشارة ما مع الحفاظ على '
         'شكل موجتها الأساسي. يصف الكسب مقدار التضخيم الحادث.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/amplifier.mp4',
     tags: ['gain', 'signal', 'power', 'كسب', 'تضخيم'],
   ),
   Term(
@@ -1169,6 +1170,7 @@ const List<Term> sampleTerms = [
         'نقطة مرجعية في الدائرة تُعرَّف بصفر فولت، تُقاس إليها جميع الجهود الأخرى. '
         'كذلك هو توصيل أمان بالأرض يمنع تراكم جهد خطر على المعدات.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/ground.mp4',
     tags: ['reference', 'zero volts', 'safety', 'earth', 'مرجع', 'أمان'],
   ),
   Term(
@@ -1183,6 +1185,7 @@ const List<Term> sampleTerms = [
         'توصيل غير طبيعي منخفض المقاومة بين نقطتين في الدائرة يُسبب تدفق تيار '
         'مفرط، متجاوزًا الحمل المقصود. قد يُسبب ارتفاع حرارة أو حرائق أو تلف مكونات.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/short_circuit.mp4',
     tags: ['fault', 'overcurrent', 'safety', 'خطأ', 'تيار زائد', 'أمان'],
   ),
   Term(
@@ -1296,6 +1299,7 @@ const List<Term> sampleTerms = [
         'دائرة متكاملة مدمجة تحتوي على معالج وذاكرة وأطراف إدخال/إخراج قابلة '
         'للبرمجة على رقاقة واحدة. تُستخدم للتحكم في الأنظمة المضمَّنة كالأردوينو.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/microcontroller.mp4',
     tags: ['embedded', 'Arduino', 'chip', 'مضمَّن', 'رقاقة'],
   ),
   Term(
@@ -1325,6 +1329,7 @@ const List<Term> sampleTerms = [
         'التي يحتاجها الحمل الإلكتروني. تشمل الأنواع: مزودات الطاقة الخطية '
         'ومفتاحية التحويل.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/power_supply.mp4',
     tags: ['voltage regulation', 'AC/DC', 'conversion', 'تحويل', 'تنظيم'],
   ),
   Term(
@@ -1409,6 +1414,7 @@ const List<Term> sampleTerms = [
         'جهاز يخزن الطاقة الكيميائية ويحوِّلها إلى طاقة كهربائية من خلال '
         'تفاعلات كهروكيميائية. يتميز بجهده وسعته (أمبير·ساعة) وكثافة طاقته.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/battery.mp4',
     tags: ['energy storage', 'chemical', 'voltage', 'capacity', 'سعة', 'طاقة'],
   ),
   Term(
@@ -1424,6 +1430,7 @@ const List<Term> sampleTerms = [
         'في اتجاه واحد فقط. كهرباء الشبكة متردد؛ والبطاريات تورِّد مستمرًا. '
         'مزودات الطاقة تحول بين الاثنين.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/ac_dc.mp4',
     tags: ['alternating', 'direct', 'mains', 'battery', 'بطارية', 'شبكة'],
   ),
 ];
