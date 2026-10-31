@@ -1010,6 +1010,7 @@ const List<Term> sampleTerms = [
         'مكوّن سلبي يخزن الطاقة في مجال مغناطيسي عند مرور التيار خلاله. '
         'يكون عادةً ملفًا من الأسلاك؛ ويُقاس الحث بالهنري (H).',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/inductor.mp4',
     tags: ['henry', 'coil', 'magnetic', 'هنري', 'ملف', 'مغناطيسي'],
   ),
   Term(
@@ -1039,6 +1040,7 @@ const List<Term> sampleTerms = [
         'جهاز شبه موصل يسمح للتيار بالتدفق في اتجاه واحد بشكل أساسي، ويعمل '
         'كصمام أحادي الاتجاه. يُستخدم في التقويم وتثبيت الإشارات وتنظيم الجهد.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/diode.mp4',
     tags: ['rectifier', 'one-way', 'semiconductor', 'تقويم', 'شبه موصل'],
   ),
   Term(
@@ -1053,6 +1055,7 @@ const List<Term> sampleTerms = [
         'جهاز ينقل الطاقة الكهربائية بين دائرتين أو أكثر عبر الحث الكهرومغناطيسي، '
         'رافعًا الجهد أو خافضًا إياه مع الإبقاء على التردد ثابتًا.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/transformer.mp4',
     tags: ['induction', 'step-up', 'step-down', 'AC', 'حث', 'تيار متردد'],
   ),
   Term(
