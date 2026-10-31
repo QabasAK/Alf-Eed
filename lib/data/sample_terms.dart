@@ -20,6 +20,7 @@ const List<Term> sampleTerms = [
         'تأثير يُسلَّط على جسم يمكنه أن يُسبب تسارعه أو تباطؤه أو تغيير اتجاهه. '
         'تُقاس بالنيوتن (N) وتُعبَّر عنها بقانون نيوتن الثاني: F = ma.',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/force.mp4',
     tags: ['newton', 'mechanics', 'acceleration', 'نيوتن', 'ميكانيكا'],
   ),
   Term(
@@ -34,6 +35,7 @@ const List<Term> sampleTerms = [
         'القدرة على أداء الشغل أو إحداث تغيير في النظام. توجد في أشكال عديدة '
         '— حركية وكامنة وحرارية وكهربائية — وتُحفَظ عبر التحولات. تُقاس بالجول (J).',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/energy.mp4',
     tags: ['joule', 'kinetic', 'potential', 'conservation', 'جول', 'حفظ الطاقة'],
   ),
   Term(
@@ -47,6 +49,7 @@ const List<Term> sampleTerms = [
         'معدل انتقال الطاقة أو أداء الشغل. تُحسَب بالمعادلة P = W/t (الشغل مقسومًا '
         'على الزمن). تُقاس بالواط (W).',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/power.mp4',
     tags: ['watt', 'rate', 'work', 'واط', 'شغل'],
   ),
   Term(
@@ -103,6 +106,7 @@ const List<Term> sampleTerms = [
         'معدل تدفق الشحنة الكهربائية عبر موصل. يُقاس بالأمبير (A) ويُحرِّكه '
         'فرق الجهد الكهربائي.',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/current.mp4',
     tags: ['ampere', 'charge', 'flow', 'أمبير', 'شحنة'],
   ),
   Term(
@@ -116,6 +120,7 @@ const List<Term> sampleTerms = [
         'المقاومة التي تبديها مادة ما لتدفق التيار الكهربائي. تُعرَّف بقانون أوم: '
         'R = V/I. تُقاس بالأوم (Ω).',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/resistance.mp4',
     tags: ['ohm', 'opposition', 'conductor', 'أوم', 'موصل'],
   ),
   Term(
@@ -161,6 +166,7 @@ const List<Term> sampleTerms = [
         'جهاز يكتشف المنبهات الفيزيائية من البيئة — كالحرارة والضغط والضوء — '
         'ويستجيب لها محوِّلاً إياها إلى إشارة كهربائية.',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/sensor.mp4',
     tags: ['detection', 'transducer', 'input', 'كشف', 'محول'],
   ),
   Term(
@@ -203,6 +209,7 @@ const List<Term> sampleTerms = [
         'مجموعة من المكونات المترابطة التي تعمل معًا لأداء وظيفة محددة. تمتلك '
         'الأنظمة مدخلات وعمليات ومخرجات، وتُدرَس من خلال هندسة الأنظمة.',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/system.mp4',
     tags: ['input', 'output', 'process', 'مدخلات', 'مخرجات'],
   ),
   Term(
@@ -217,6 +224,7 @@ const List<Term> sampleTerms = [
         'عملية توجيه جزء من مخرجات النظام إلى مدخلاته لتنظيم سلوكه أو تصحيحه. '
         'التغذية الراجعة السلبية تُثبِّت النظام؛ والإيجابية تُضخِّم التغيير.',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/feedback.mp4',
     tags: ['control', 'loop', 'regulation', 'تحكم', 'تنظيم'],
   ),
   Term(
@@ -1285,6 +1293,7 @@ const List<Term> sampleTerms = [
         'لوحة الدوائر المطبوعة — لوح مسطح من مادة عازلة بمسارات نحاسية موصلة '
         'تدعم ميكانيكيًا وتوصِّل كهربائيًا المكونات الإلكترونية.',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/pcb.mp4',
     tags: ['board', 'copper', 'electronics', 'نحاس', 'إلكترونيات'],
   ),
   Term(
