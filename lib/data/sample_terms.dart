@@ -995,6 +995,7 @@ const List<Term> sampleTerms = [
         'مكوّن سلبي ذو طرفين يخزن الطاقة في مجال كهربائي. يتكون من لوحين '
         'موصلين يفصل بينهما عازل كهربائي. تُقاس السعة بالفاراد (F).',
     category: TermCategory.electricalEngineering,
+    animationPath: 'assets/animations/electrical_engineering/capacitor.mp4',
     tags: ['farad', 'charge', 'dielectric', 'فاراد', 'عازل'],
   ),
   Term(
