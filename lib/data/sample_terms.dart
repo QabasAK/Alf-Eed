@@ -405,6 +405,7 @@ const List<Term> sampleTerms = [
         'مادة تسمح بتدفق التيار الكهربائي أو الحرارة خلالها بسهولة بفضل وجود '
         'إلكترونات حرة. المعادن كالنحاس والألومنيوم موصلات كهربائية شائعة.',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/conductor.mp4',
     tags: ['copper', 'electron', 'electric', 'نحاس', 'إلكترون'],
   ),
   Term(
@@ -419,6 +420,7 @@ const List<Term> sampleTerms = [
         'مادة تقاوم تدفق التيار الكهربائي أو الحرارة، ولديها إلكترونات حرة '
         'قليلة جدًا. تُستخدم للحماية من الصدمة الكهربائية وحصر الإشارات داخل الموصلات.',
     category: TermCategory.engineeringBasics,
+    animationPath: 'assets/animations/engineering_basics/insulator.mp4',
     tags: ['resistance', 'protection', 'electric', 'حماية', 'مقاومة'],
   ),
   Term(
