@@ -536,6 +536,7 @@ const List<Term> sampleTerms = [
         'موقع تخزين مُسمَّى في برنامج يحتفظ بقيمة يمكن قراءتها أو تعديلها أثناء '
         'التنفيذ. تمتلك المتغيرات نوعًا واسمًا وقيمة.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/variable.mp4',
     tags: ['storage', 'value', 'type', 'تخزين', 'قيمة'],
   ),
   Term(
@@ -549,6 +550,7 @@ const List<Term> sampleTerms = [
         'كتلة شيفرة مُسمَّاة وقابلة لإعادة الاستخدام تؤدي مهمة محددة، وقد تقبل '
         'مدخلات (معاملات) وتُعيد قيمة ناتجة.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/function.mp4',
     tags: ['reuse', 'parameters', 'return', 'معاملات', 'إعادة استخدام'],
   ),
   Term(
@@ -635,6 +637,7 @@ const List<Term> sampleTerms = [
         'هيكل بيانات يخزن مجموعة مرتبة ذات حجم ثابت من العناصر من النوع ذاته '
         'في مواقع ذاكرة متجاورة، يمكن الوصول إليها بفهرس رقمي.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/array.mp4',
     tags: ['index', 'contiguous', 'collection', 'فهرس', 'مجموعة'],
   ),
   Term(
@@ -663,6 +666,7 @@ const List<Term> sampleTerms = [
         'برنامج يترجم الشيفرة المصدرية المكتوبة بلغة برمجة عالية المستوى إلى '
         'رمز آلي أو تمثيل وسيط يمكن للحاسوب تنفيذه.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/compiler.mp4',
     tags: ['translation', 'source code', 'machine code', 'ترجمة', 'رمز آلي'],
   ),
   Term(
@@ -677,6 +681,7 @@ const List<Term> sampleTerms = [
         'دائرة رقمية أساسية تُجري عملية منطقية بوليانية على مدخل ثنائي واحد أو '
         'أكثر لإنتاج مخرج ثنائي واحد. تشمل البوابات الأساسية AND وOR وNOT.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/logic_gate.mp4',
     tags: ['AND', 'OR', 'NOT', 'boolean', 'digital', 'بوليان', 'رقمي'],
   ),
   Term(
@@ -705,6 +710,7 @@ const List<Term> sampleTerms = [
         'عتاد يخزن البيانات والتعليمات لاستخدامها من قِبل المعالج. الذاكرة '
         'الأولية (RAM) سريعة وطيّارة؛ والذاكرة الثانوية (التخزين) أبطأ لكنها دائمة.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/memory.mp4',
     tags: ['RAM', 'storage', 'volatile', 'persistent', 'تخزين', 'طيّار'],
   ),
   Term(
@@ -719,6 +725,7 @@ const List<Term> sampleTerms = [
         'وحدة المعالجة المركزية (CPU) في الحاسوب التي تجلب التعليمات وتفككها '
         'وتنفذها. وهي دماغ أي جهاز حوسبة، تُجري العمليات الحسابية والمنطقية.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/processor.mp4',
     tags: ['CPU', 'fetch', 'decode', 'execute', 'معالجة', 'حوسبة'],
   ),
   Term(
@@ -733,6 +740,7 @@ const List<Term> sampleTerms = [
         'برنامج يدير موارد عتاد الحاسوب وبرمجياته، يوفر خدمات مشتركة للبرامج '
         'ويعمل كواجهة بين العتاد والتطبيقات.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/operating_system.mp4',
     tags: ['OS', 'kernel', 'resources', 'نواة', 'موارد'],
   ),
 
@@ -832,6 +840,7 @@ const List<Term> sampleTerms = [
         'مجموعة منظمة من البيانات المهيكلة المخزنة إلكترونيًا، تُدار بواسطة '
         'نظام إدارة قواعد البيانات (DBMS). تتيح الاستعلام والتحديث والاسترجاع الكفء للمعلومات.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/database.mp4',
     tags: ['DBMS', 'SQL', 'query', 'storage', 'استعلام', 'تخزين'],
   ),
   Term(
@@ -974,6 +983,7 @@ const List<Term> sampleTerms = [
         'العملية المنهجية لإيجاد الأخطاء (الحشرات) في شيفرة البرمجيات وإصلاحها. '
         'تتضمن تحديد السبب الجذري وعزل الشيفرة المعيبة والتحقق من الإصلاح.',
     category: TermCategory.computerEngineering,
+    animationPath: 'assets/animations/computer_engineering/debugging.mp4',
     tags: ['bug', 'error', 'testing', 'fix', 'خطأ', 'اختبار'],
   ),
 
