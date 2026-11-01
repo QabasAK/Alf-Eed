@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/term.dart';
 
-/// LIU × ألف ايد brand palette: black ink on warm paper, one electric blue accent.
+/// LIU × ألف ايد brand palette: black ink on warm paper, one deep blue accent.
 class AppColors {
   AppColors._();
 
   // Brand
-  static const Color blue = Color(0xFF1E3CFF);
-  static const Color blueDark = Color(0xFF142AD1);
-  static const Color blueTint = Color(0xFFE9ECFF);
+  static const Color blue = Color(0xFF2A44B5);
+  static const Color blueDark = Color(0xFF1F3590);
+  static const Color blueTint = Color(0xFFE8EBF8);
   static const Color ink = Color(0xFF0B0B0C);
   static const Color graphite = Color(0xFF5E616B);
 

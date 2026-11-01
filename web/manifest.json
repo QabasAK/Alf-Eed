@@ -4,7 +4,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#F4F2EE",
-    "theme_color": "#1E3CFF",
+    "theme_color": "#2A44B5",
     "description": "Jordanian Sign Language Engineering Lexicon",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
