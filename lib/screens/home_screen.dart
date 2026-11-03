@@ -176,8 +176,6 @@ class _HeroText extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Container(width: 48, height: 4, color: AppColors.blue),
-        const SizedBox(height: 24),
         Text(
           'Bridging engineering knowledge and Jordanian Sign Language through a bilingual, accessible lexicon.',
           style: GoogleFonts.inter(
