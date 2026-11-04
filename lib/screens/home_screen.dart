@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/link.dart';
 import '../theme/app_colors.dart';
 import '../widgets/liu_logo.dart';
 
@@ -338,6 +339,9 @@ class _BookCover extends StatelessWidget {
   const _BookCover({required this.width});
 
   static const double _aspect = 826 / 550; // cover image height / width
+  static final Uri _bookPage = Uri.parse(
+    'https://en.wikipedia.org/wiki/The_Hitchhiker%27s_Guide_to_the_Galaxy_(novel)',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -409,7 +413,7 @@ class _BookCover extends StatelessWidget {
     );
 
     // Padding leaves room for the stickers that hang off the edges.
-    return Padding(
+    final dressedBook = Padding(
       padding: EdgeInsets.fromLTRB(10 * s, 0, 28 * s, 16 * s),
       child: Stack(
         clipBehavior: Clip.none,
@@ -481,6 +485,41 @@ class _BookCover extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        dressedBook,
+        Padding(
+          padding: EdgeInsets.fromLTRB(10 * s, 8 * s, 0, 0),
+          child: SizedBox(
+            width: width,
+            child: Link(
+              uri: _bookPage,
+              target: LinkTarget.blank,
+              builder: (context, followLink) => MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: followLink,
+                  child: Text(
+                    'Cover of The Hitchhiker\'s Guide to the Galaxy by Douglas Adams. '
+                    '© the respective rights holders.',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.85),
+                      height: 1.5,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Colors.white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
