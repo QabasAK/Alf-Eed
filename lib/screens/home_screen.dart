@@ -624,8 +624,8 @@ class _InfoSection extends StatelessWidget {
                 icon: Icons.sign_language_rounded,
                 english: 'JSL Sign Videos',
                 arabic: 'مقاطع الإشارة',
-                description: 'Sign demonstrations recorded with HLID for authentic Jordanian Sign Language.',
-                arabicDescription: 'توضيحات الإشارة مسجلة مع HLID للغة الإشارة الأردنية الأصيلة.',
+                description: 'Sign demonstrations in authentic Jordanian Sign Language.',
+                arabicDescription: 'توضيحات الإشارة بلغة الإشارة الأردنية الأصيلة.',
               ),
               _InfoCard(
                 icon: Icons.animation_rounded,

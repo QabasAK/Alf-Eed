@@ -4,7 +4,7 @@ import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import '../theme/app_colors.dart';
 
-/// Styled placeholder for the JSL sign video recorded with HLID.
+/// Styled placeholder for the JSL sign video.
 /// Shows the sign video when [videoPath] is provided.
 class SignVideoPlaceholder extends StatefulWidget {
   final String? videoPath;
@@ -146,25 +146,6 @@ class _SignVideoPlaceholderStatic extends StatelessWidget {
               fontSize: 15,
               fontWeight: FontWeight.w600,
               color: AppColors.ink,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.ink.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppColors.ink.withValues(alpha: 0.25),
-              ),
-            ),
-            child: Text(
-              'Recorded with HLID',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: AppColors.ink,
-              ),
             ),
           ),
         ],
