@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'data/terms_repository.dart';
 import 'screens/home_screen.dart';
+import 'screens/initiative_screen.dart';
 import 'screens/lexicon_screen.dart';
 import 'screens/term_detail_screen.dart';
 import 'theme/app_theme.dart';
@@ -24,6 +25,10 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
+      builder: (context, _) => const InitiativeScreen(),
+    ),
+    GoRoute(
+      path: '/engineering',
       builder: (context, _) => const HomeScreen(),
     ),
     GoRoute(
@@ -45,7 +50,7 @@ class JslLexiconApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'LIU — JSL Engineering Lexicon',
+      title: 'الف ايد — 1000 Hands',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: _router,

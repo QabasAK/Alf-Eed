@@ -53,7 +53,7 @@ class _LexiconScreenState extends State<LexiconScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.ink),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.go('/engineering'),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

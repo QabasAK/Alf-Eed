@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/link.dart';
 import '../theme/app_colors.dart';
 import '../widgets/liu_logo.dart';
+import '../widgets/logo_panel.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -47,17 +48,27 @@ class _NavBar extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: isWide ? 40 : 20, vertical: 14),
       child: Row(
         children: [
-          const LiuLogo(width: 64, variant: LiuLogoVariant.wordmark),
-          const SizedBox(width: 14),
-          if (showExtras)
-            Text(
-              '1000 Hands',
-              style: GoogleFonts.inter(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => context.go('/'),
+              child: Row(
+                children: [
+                  const LiuLogo(width: 64, variant: LiuLogoVariant.wordmark),
+                  const SizedBox(width: 14),
+                  if (showExtras)
+                    Text(
+                      '1000 Hands',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
               ),
             ),
+          ),
           const Spacer(),
           TextButton(
             onPressed: onExploreTap,
@@ -124,7 +135,7 @@ class _HeroSection extends StatelessWidget {
                     ),
                     const SizedBox(width: 64),
                     // ── Right: logo panel ────────────────────────────────
-                    const _LogoPanel(logoWidth: 220),
+                    const LogoPanel(logoWidth: 220),
                   ],
                 )
               // Narrow screens fall back to a single column
@@ -132,7 +143,7 @@ class _HeroSection extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Center(child: _LogoPanel(logoWidth: 150)),
+                    const Center(child: LogoPanel(logoWidth: 150)),
                     const SizedBox(height: 36),
                     const _HeroText(),
                     const SizedBox(height: 32),
@@ -194,36 +205,6 @@ class _HeroText extends StatelessWidget {
             color: AppColors.textSecondary,
             height: 1.8,
           ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Stone panel holding the full logo lockup, echoing the brand board's
-/// offset grey blocks.
-class _LogoPanel extends StatelessWidget {
-  final double logoWidth;
-  const _LogoPanel({required this.logoWidth});
-
-  @override
-  Widget build(BuildContext context) {
-    final pad = logoWidth * 0.28;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // Decorative offset block
-        Positioned(
-          right: -pad * 0.35,
-          bottom: -pad * 0.35,
-          width: pad * 1.6,
-          height: pad * 1.6,
-          child: Container(color: AppColors.blue),
-        ),
-        Container(
-          padding: EdgeInsets.all(pad),
-          color: AppColors.stone,
-          child: LiuLogo(width: logoWidth),
         ),
       ],
     );
