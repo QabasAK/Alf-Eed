@@ -1,0 +1,2 @@
+id,english_name,arabic_name,english_definition,arabic_definition,arabic_status,category,tags,animation_path,sign_video_path,sign_status,signer_credit
+prime_number,Prime number,عدد أولي,A whole number greater than 1 that can only be divided evenly by 1 and itself.,عدد صحيح أكبر من 1 لا يقبل القسمة دون باقٍ إلا على 1 وعلى نفسه.,needs_review,number_theory,divisor;factor;قاسم,assets/animations/number_theory/prime_number.mp4,,not_filmed,
