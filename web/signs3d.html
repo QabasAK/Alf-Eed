@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الف ايد — 3D letters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;800;900&family=Inter:wght@500;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #0A0A0A; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--ink); font-family: Inter, Tajawal, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 48px 16px; display: grid; gap: 40px; grid-template-columns: 1fr; }
+  @media (min-width: 860px) { main { grid-template-columns: 5fr 6fr; align-items: start; } }
+  h1 { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; margin: 0; direction: ltr; text-align: left; }
+  h2 { font-family: Tajawal; font-size: 28px; font-weight: 900; margin: 4px 0 16px; }
+  p { line-height: 1.6; color: #444; margin: 0 0 8px; }
+  .en { direction: ltr; text-align: left; }
+  #letters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 24px; }
+  #letters button {
+    font: 800 22px Tajawal; width: 44px; height: 44px; border: 2px solid var(--ink);
+    background: #fff; color: var(--ink); cursor: pointer;
+  }
+  #letters button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  #letters button.moves::after { content: "↻"; font-size: 10px; position: relative; top: -14px; }
+  #stage { position: relative; aspect-ratio: 1; transition: background .4s; touch-action: none; }
+  #stage canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  #label { position: absolute; top: 12px; right: 16px; font: 900 64px Tajawal; color: #fff; pointer-events: none; }
+  #hint { position: absolute; bottom: 12px; left: 16px; right: 16px; font-size: 13px; color: #fff; opacity: .85; pointer-events: none; direction: ltr; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<main>
+  <section>
+    <h1>Turn the sign around.</h1>
+    <h2>لِف الإشارة وشوفها من كل جهة</h2>
+    <p class="en">Pick a letter, then drag the hand to see it from any side. Prototype: poses are read off flat drawings, so treat them as approximate until a signer checks them. Letters marked ↻ move; this shows their starting shape only.</p>
+    <div id="letters"></div>
+  </section>
+  <div id="stage"><span id="label"></span><span id="hint">Drag to rotate · scroll to zoom</span></div>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// Same colours as the fields on the site, cycled per letter.
+const FIELD_COLOURS = ['#2A44B5', '#C62F3B', '#6B3FA0', '#3F7D20', '#0B7A8C', '#A8246B', '#B4530F'];
+
+// ── Poses ────────────────────────────────────────────────────────────────────
+// A right hand, palm toward the viewer. Fingers are index, middle, ring, pinky, each
+// [knuckle, middle joint, tip joint, spread] in degrees; bending is toward the palm.
+// The thumb is [lift toward palm, twist, swing toward the fingers (negative = out), bend 1, bend 2 (negative = toward the palm)].
+// The wrist is the whole hand's rotation [x, y, z].
+const UP = [0, 0, 0], CURL = [85, 100, 55], FLAT = [88, 0, 0], CUP = [40, 45, 25];
+const T = {  // tuned on the WebXR hand, whose relaxed thumb already points up and out
+  up:   [5, 0, 40, 0, 0],          // thumbs-up along the fist
+  out:  [0, 0, -35, 0, 0],         // straight out to the side
+  tuck: [65, 0, 70, -45, -35],     // across the front of the curled fingers
+  side: [15, 0, 35, -10, 0],       // resting against the side of the fist
+  palm: [65, 0, 70, -45, -35],     // folded into the palm under straight fingers
+  c:    [30, 0, 0, -20, -15],      // the lower half of a C
+  along:[15, 0, 30, 0, 0],         // parallel to the fingers
+}
+const pose = (f, t, w = [0, 0, 0], moves = false) => ({ f, t, w, moves });
+const fist = [CURL, CURL, CURL, CURL];
+const UPRIGHT_SIDE = [0, -90, 0];  // wrist up, thumb side toward you: for fingers bent sideways
+const SIDEWAYS = [90, 0, 90];   // thumb side toward you, palm down: the drawings' side view, mirrored for a right hand
+
+const POSES = {
+  'ا': pose(fist, T.up, [0, -40, 0]),
+  'أ': pose(fist, T.up, [0, -40, 0]),
+  'إ': pose(fist, T.up, [0, -40, 180], true),
+  'ب': pose([UP, CURL, CURL, CURL], T.tuck),
+  'ت': pose([UP, UP, CURL, CURL], T.tuck),
+  'ث': pose([UP, UP, UP, CURL], T.tuck),
+  'ج': pose([CUP, CUP, CUP, CUP], T.c, UPRIGHT_SIDE),
+  'ح': pose([FLAT, FLAT, FLAT, FLAT], T.along, UPRIGHT_SIDE),
+  'خ': pose([[75, 25, 10], [75, 25, 10], [75, 25, 10], [75, 25, 10]], [30, 0, 10, -25, -15], UPRIGHT_SIDE),
+  'د': pose([UP, CURL, CURL, CURL], T.along, SIDEWAYS),
+  'ذ': pose([[20, 45, 25], CURL, CURL, CURL], T.c, SIDEWAYS),
+  'ر': pose([[0, 10, 10], CURL, CURL, CURL], T.tuck, [0, 0, -20]),
+  'ز': pose([UP, [30, 60, 30], CURL, CURL], T.tuck, [0, 0, -25]),
+  'س': pose([UP, UP, UP, UP], T.side),
+  'ش': pose([[0, 0, 0, -12], [0, 0, 0, -3], [0, 0, 0, 5], [0, 0, 0, 14]], T.out),
+  'ص': pose(fist, T.side),
+  'ض': pose(fist, T.out),
+  'ط': pose([UP, FLAT, FLAT, FLAT], T.palm, [0, -40, 0]),
+  'ظ': pose([UP, [80, 60, 20], [80, 60, 20], [80, 60, 20]], T.tuck),
+  'ع': pose([UP, CURL, CURL, CURL], T.tuck, SIDEWAYS),
+  'غ': pose([UP, UP, CURL, CURL], T.tuck, SIDEWAYS),
+  'ف': pose([[20, 90, 60], CURL, CURL, CURL], T.tuck),
+  'ق': pose([[10, 70, 50], [10, 70, 50], CURL, CURL], T.tuck),
+  'ك': pose([UP, UP, UP, UP], T.palm),
+  'ل': pose([UP, CURL, CURL, CURL], T.out),
+  'م': pose([UP, CURL, CURL, CURL], [70, 0, 75, -50, -40]),
+  'ن': pose([[0, 15, 25], CURL, CURL, CURL], [0, 0, 0, 0, -10]),
+  'ه': pose([[15, 20, 10, -10], [15, 20, 10, -3], [15, 20, 10, 4], [15, 20, 10, 12]], T.out, [0, 0, 0], true),
+  'و': pose(fist, T.tuck, [-70, 0, 30]),
+  'ؤ': pose(fist, T.tuck, [-70, 0, 30], true),
+  'ي': pose([CURL, CURL, CURL, [0, 0, 0, 15]], T.out),
+  'ئ': pose([CURL, CURL, CURL, [0, 0, 0, 15]], T.out, [0, 0, 0], true),
+  'ة': pose([[10, 60, 40], [10, 60, 40], CURL, CURL], T.tuck, [0, 0, 0], true),
+  'ء': pose([UP, CURL, CURL, CURL], T.tuck, [0, 0, 0], true),
+};
+
+// ── The hand: the WebXR generic right hand (MIT, Amazon), toon-shaded with an ink outline ──
+// Its bones all hang off the armature, so link them into chains first; then bending a
+// knuckle carries the rest of the finger with it.
+const SIZE = 13;  // The model is a real hand in metres; the scene is ~2 units tall.
+const hand = new THREE.Group();
+const FINGER_NAMES = ['index', 'middle', 'ring', 'pinky'];
+let rig = null;  // filled once the model loads
+
+new GLTFLoader().load('models/right-hand.glb', (gltf) => {
+  const root = gltf.scene;
+  root.updateMatrixWorld(true);
+  const bone = (n) => root.getObjectByName(n);
+  const pos = (n) => bone(n).getWorldPosition(new THREE.Vector3());
+  const chainOf = (f) => f === 'thumb'
+    ? ['thumb-metacarpal', 'thumb-phalanx-proximal', 'thumb-phalanx-distal', 'thumb-tip']
+    : [`${f}-finger-metacarpal`, `${f}-finger-phalanx-proximal`, `${f}-finger-phalanx-intermediate`, `${f}-finger-phalanx-distal`, `${f}-finger-tip`];
+  for (const f of ['thumb', ...FINGER_NAMES]) {
+    const names = chainOf(f);
+    bone('wrist').attach(bone(names[0]));
+    for (let i = 1; i < names.length; i++) bone(names[i - 1]).attach(bone(names[i]));
+  }
+
+  // Stand the hand up, palm toward the camera: up = wrist to middle knuckle, normal = out of the palm.
+  const up = pos('middle-finger-phalanx-proximal').sub(pos('wrist')).normalize();
+  const across = pos('index-finger-phalanx-proximal').sub(pos('pinky-finger-phalanx-proximal')).normalize();
+  const normal = new THREE.Vector3().crossVectors(across, up).normalize();
+  const side = new THREE.Vector3().crossVectors(up, normal);
+  root.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(side, up, normal)).invert();
+  root.updateMatrixWorld(true);
+
+  // Each joint bends about axes fixed in its own rest frame; store them there once.
+  const toLocal = (b, worldAxis) => worldAxis.clone().applyQuaternion(b.getWorldQuaternion(new THREE.Quaternion()).invert()).normalize();
+  const NORMAL = new THREE.Vector3(0, 0, 1), ACROSS = new THREE.Vector3(1, 0, 0);
+  const joint = (n) => {
+    const b = bone(n);
+    const dir = b.children[0].getWorldPosition(new THREE.Vector3()).sub(b.getWorldPosition(new THREE.Vector3())).normalize();
+    const curl = new THREE.Vector3().crossVectors(dir, NORMAL);  // turns the tip toward the palm side
+    return { b, rest: b.quaternion.clone(), curl: toLocal(b, curl), spread: toLocal(b, NORMAL), twist: toLocal(b, dir), across: toLocal(b, ACROSS) };
+  };
+  rig = {
+    fingers: FINGER_NAMES.map((f) => chainOf(f).slice(1, 4).map(joint)),
+    thumb: chainOf('thumb').slice(0, 3).map(joint),
+  };
+
+  root.traverse((o) => {
+    if (!o.isSkinnedMesh) return;
+    o.material = new THREE.MeshToonMaterial({ color: 0xffffff });
+    const outline = new THREE.SkinnedMesh(o.geometry, inkMaterial());
+    outline.bind(o.skeleton, o.bindMatrix);
+    o.parent.add(outline);
+    o.frustumCulled = outline.frustumCulled = false;  // skinned bounds don't follow the bent fingers
+  });
+  root.scale.setScalar(SIZE);
+  hand.add(root);
+});
+
+// Inverted hull: the same skinned mesh pushed out along its normals, back faces only, in black.
+function inkMaterial() {
+  const m = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.BackSide });
+  m.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(objectNormal) * 0.0012;');
+  };
+  return m;
+}
+
+// ── Animate between poses by easing every angle toward the target ────────────
+const flat = (p) => [...p.f.flatMap((d) => [d[0], d[1], d[2], d[3] ?? 0]), ...p.t, ...p.w];
+let current = flat(POSES['ب']), target = current;
+const rad = THREE.MathUtils.degToRad;
+const tmp = new THREE.Quaternion();
+const turn = (j, axis, deg) => j.b.quaternion.multiply(tmp.setFromAxisAngle(j[axis], rad(deg)));
+
+function apply(a) {
+  if (rig) {
+    rig.fingers.forEach((joints, i) => {
+      const [k, m, t, spread] = a.slice(i * 4, i * 4 + 4);
+      joints.forEach((j) => j.b.quaternion.copy(j.rest));
+      turn(joints[0], 'spread', spread);
+      turn(joints[0], 'curl', k);
+      turn(joints[1], 'curl', m);
+      turn(joints[2], 'curl', t);
+    });
+    const [lift, twist, swing, b1, b2] = a.slice(16, 21);
+    const [base, mid, tip] = rig.thumb;
+    rig.thumb.forEach((j) => j.b.quaternion.copy(j.rest));
+    turn(base, 'spread', swing);
+    turn(base, 'across', lift);
+    turn(base, 'twist', twist);
+    turn(mid, 'curl', b1);
+    turn(tip, 'curl', b2);
+  }
+  const [wx, wy, wz] = a.slice(21);
+  hand.rotation.set(rad(wx), rad(wy), rad(wz));
+}
+
+// ── Scene ─────────────────────────────────────────────────────────────────────
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });  // transparent: the stage colour shows through
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+scene.add(hand, new THREE.AmbientLight(0xffffff, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(2, 3, 4);
+scene.add(sun);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+camera.position.set(0, 0.3, 6);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.enablePan = false;
+controls.minDistance = 3.5;
+controls.maxDistance = 9;
+controls.target.set(0, 0.3, 0);
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.5;
+controls.addEventListener('start', () => (controls.autoRotate = false));
+
+new ResizeObserver(() => {
+  const s = stage.clientWidth;
+  renderer.setSize(s, s, false);
+}).observe(stage);
+
+renderer.setAnimationLoop(() => {
+  current = current.map((v, i) => v + (target[i] - v) * 0.12);
+  apply(current);
+  controls.update();
+  renderer.render(scene, camera);
+});
+
+// ── Letter picker ─────────────────────────────────────────────────────────────
+const label = document.getElementById('label');
+const buttons = document.getElementById('letters');
+const order = 'ا أ إ ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ؤ ي ئ ة ء'.split(' ');
+order.forEach((letter, i) => {
+  const b = document.createElement('button');
+  b.textContent = letter;
+  b.setAttribute('aria-label', `Show the handshape for ${letter}`);
+  if (POSES[letter].moves) b.classList.add('moves');
+  b.onclick = () => show(letter, i);
+  buttons.append(b);
+});
+function show(letter, i) {
+  target = flat(POSES[letter]);
+  label.textContent = letter;
+  stage.style.background = FIELD_COLOURS[i % FIELD_COLOURS.length];
+  [...buttons.children].forEach((b) => b.setAttribute('aria-pressed', b.textContent === letter));
+}
+show('ب', order.indexOf('ب'));
+window.signs3d = { show: (l) => show(l, order.indexOf(l)), controls, POSES, T, set: (p) => (target = flat(p)) };  // for trying poses from the console
+</script>
+</body>
+</html>
