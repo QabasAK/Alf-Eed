@@ -2,16 +2,18 @@
 
 Fill in signs.csv (and, if you like, lessons.csv), then run:  python build_course.py
 
-Each lesson teaches 3 new signs. Every sign comes back for review about 1, 3 and 7 weeks
-after it was taught. One email goes out a week, and none asks you to recall more than
-MAX_REVIEW old signs; reviews that don't fit move to the next week. After the last lesson,
-review-only emails carry on until every sign has had all three reviews.
+Each email teaches ONE new sign, and one goes out every SEND_EVERY days. Every sign comes back
+for a quick check REVIEW_AFTER emails later (about 1, 2 and 5 weeks). No email checks more than
+MAX_REVIEW old signs; checks that don't fit move to the next email. After the last sign,
+practice-only emails carry on until every sign has had all its checks.
+
+A check shows the word and asks you to sign it, then shows the GIF lower down to compare.
 
 Output: emails/ has a preview of each email (open it in a browser). course-plan.html lists every
-email, what it teaches, what it reviews, and what's still missing. apps-script/Code.gs is the
+email, what it teaches, what it checks, and what's still missing. apps-script/Code.gs is the
 whole course plus sender.gs, ready to paste into Google Apps Script (see SETUP.txt).
 """
-import base64, csv, gzip, html, json, os, random, re
+import base64, csv, gzip, html, json, os, re
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -21,13 +23,16 @@ UNSUBSCRIBE = "{{UNSUBSCRIBE}}"  # sender.gs swaps in each subscriber's own link
 # gifs/ there before sending. The previews in emails/ use the local gifs/ folder instead.
 GIF_BASE = "https://thousand-hands-signs.pages.dev/"
 GIFS = "{{GIFS}}/"  # swapped for GIF_BASE in the real emails and for ../gifs/ in the previews
-REVIEW_AFTER = (1, 3, 7)  # weeks after a sign is taught (later if an email is already full)
-MAX_REVIEW = 6  # most old signs one email asks you to recall
+SEND_EVERY = 3  # days between emails
+REVIEW_AFTER = (2, 5, 12)  # emails after a sign is taught (later if an email is already full)
+MAX_REVIEW = 2  # most old signs one email asks you to recall
+MAX_PRACTICE = 3  # same, for the practice-only emails after the last sign
 
-INK, PAPER, GRAPHITE, STONE_DEEP, RED = "#0B0B0C", "#F4F2EE", "#5E616B", "#DEDBD4", "#C62828"
+# The 1000 Hands site (Alf-Eed, lib/theme/app_colors.dart): white page, ink type, field stripes.
+INK, GRAPHITE, HAIRLINE, SOFT, RED = "#0B0B0C", "#5C5C62", "#E5E5E5", "#F6F6F6", "#C62828"
 FIELDS = [(42, "#2A44B5"), (57, "#C62F3B"), (17, "#6B3FA0"), (18, "#3F7D20"),
           (33, "#0B7A8C"), (28, "#A8246B"), (10, "#B4530F")]
-FONT = "Arial,Helvetica,sans-serif"
+FONT = "Inter,Tajawal,Arial,Helvetica,sans-serif"
 CONTACT = "liu.thousandhands@gmail.com"
 
 
@@ -47,43 +52,42 @@ def gif(sign):
     return GIFS + name if os.path.exists(os.path.join(HERE, "gifs", name)) else None
 
 
-def gif_link(sign, alt):
-    """The GIF, linked to the sign's full video."""
-    img = (f'<img src="{gif(sign)}" width="150" alt="{esc(alt)}" style="display:block;width:100%;max-width:150px;'
-           f'height:auto;margin:0 auto;border-radius:6px;border:0">')
+def gif_link(sign, width):
+    """The GIF (240 px wide, so never shown bigger), linked to the sign's full video."""
+    if not gif(sign):
+        return watch_button(sign["video_url"])
+    img = (f'<img src="{gif(sign)}" width="{width}" alt="Sign for {esc(sign["english"])}" style="display:block;'
+           f'width:100%;max-width:{width}px;height:auto;margin:0 auto;border-radius:10px;border:0">')
     return f'<a href="{esc(sign["video_url"])}">{img}</a>' if sign["video_url"] else img
 
 
-def schedule(lessons, sizes):
-    """Returns [(week, lesson_number or None, [(lesson taught, weeks ago), ...])] in send order.
+def schedule(n):
+    """Returns [(slot, sign index or None, [signs to check])] in send order; slot k goes out on day (k-1)*SEND_EVERY.
 
-    One email a week. Each email reviews at most MAX_REVIEW signs (sizes[lesson] signs per lesson),
-    the most overdue first; the rest wait for next week's email. A sign's next review is counted
-    from when it was actually reviewed, so a late review never squeezes the gap after it.
-    After the last lesson, review-only emails go out on the weeks something is due.
+    Sign i is taught in slot i. Each email checks at most MAX_REVIEW old signs, the most overdue
+    first (MAX_PRACTICE once there are no new signs); the rest wait for the next email. A sign's next check is counted from when it was
+    actually checked, so a late check never squeezes the gap after it.
     """
-    n = len(lessons)
-    waiting = [(w + REVIEW_AFTER[0], 0, w) for w in lessons]  # (due week, review number, lesson)
-    emails, week = [], 1
-    while week <= n or waiting:
+    waiting = [(i + REVIEW_AFTER[0], 0, i) for i in range(1, n + 1)]  # (due slot, check number, sign)
+    emails, slot = [], 1
+    while slot <= n or waiting:
         waiting.sort()
-        picked, count = [], 0
+        picked = []
         for item in list(waiting):
             due, k, taught = item
-            if due > week or count + sizes[taught] > MAX_REVIEW:
+            if due > slot or len(picked) >= (MAX_REVIEW if slot <= n else MAX_PRACTICE):
                 continue
             waiting.remove(item)
-            picked.append((taught, week - taught))
-            count += sizes[taught]
+            picked.append(taught)
             if k + 1 < len(REVIEW_AFTER):
-                waiting.append((week + REVIEW_AFTER[k + 1] - REVIEW_AFTER[k], k + 1, taught))
-        if week <= n or picked:
-            emails.append((week, week if week <= n else None, sorted(picked, key=lambda r: r[1])))
-        week += 1
+                waiting.append((slot + REVIEW_AFTER[k + 1] - REVIEW_AFTER[k], k + 1, taught))
+        if slot <= n or picked:
+            emails.append((slot, slot if slot <= n else None, picked))
+        slot += 1
     return emails
 
 
-# ── HTML (email-safe: tables and inline styles only) ─────────────────────────
+# ── HTML (email-safe: tables and inline styles only, one column so it reads well on a phone) ──
 
 def esc(s):
     return html.escape(s)
@@ -94,103 +98,85 @@ def missing(label):
             f'[{label}]</span>')
 
 
-def stripe(height=5):
+def stripe(height=6):
     cells = "".join(f'<td width="{c}" height="{height}" style="background:{col};font-size:0;line-height:0">&nbsp;</td>'
                     for c, col in FIELDS)
     return f'<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>{cells}</tr></table>'
 
 
-def watch_button(url, label="▶ Watch"):
+def watch_button(url, label="▶ Watch the sign"):
     if not url:
         return missing("ADD VIDEO LINK")
     return (f'<a href="{esc(url)}" style="display:inline-block;background:{INK};color:#fff;text-decoration:none;'
-            f'font-weight:bold;font-size:13px;padding:7px 14px;border-radius:6px">{label}</a>')
+            f'font-weight:bold;font-size:14px;padding:10px 20px;border-radius:999px">{label}</a>')
 
 
-def credits(signs):
-    """One 'Signs from ...' line for the whole email, naming each source once."""
-    names = []
-    for s in signs:
-        if not s["creator"]:
-            name = missing("ADD CREDIT")
-        elif s["creator_url"]:
-            name = f'<a href="{esc(s["creator_url"])}" style="color:{GRAPHITE}">{esc(s["creator"])}</a>'
-        else:
-            name = esc(s["creator"])
-        if name not in names:
-            names.append(name)
-    return f'<div style="font-size:12px;color:{GRAPHITE};margin-top:8px">Signs from {", ".join(names)}</div>'
+def label(en, ar):
+    return (f'<div style="font-size:11px;font-weight:bold;letter-spacing:2px;color:{GRAPHITE}">{en} &nbsp;'
+            f'<span dir="rtl" style="letter-spacing:0;font-size:13px">{ar}</span></div>')
 
 
-def grid(cells, per_row=3):
-    """Lays cells out side by side, per_row to a row (tables, so it holds up in email apps)."""
-    rows = []
-    for i in range(0, len(cells), per_row):
-        row = cells[i:i + per_row]
-        row += ['<td width="33%"></td>'] * (per_row - len(row))
-        rows.append(f'<tr>{"".join(row)}</tr>')
-    return f'<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px">{"".join(rows)}</table>'
+def row(content, top=28):
+    return f'<tr><td style="padding:{top}px 24px 0">{content}</td></tr>'
 
 
-def section(title, title_ar, body):
-    return (f'<tr><td style="padding:18px 28px 0"><div style="font-size:11px;font-weight:bold;letter-spacing:2px;'
-            f'color:{GRAPHITE}">{title} &nbsp;<span dir="rtl" style="letter-spacing:0;font-size:13px">{title_ar}</span>'
-            f'</div>{body}</td></tr>')
+def credit(sign):
+    if not sign["creator"]:
+        return missing("ADD CREDIT")
+    if sign["creator_url"]:
+        return f'<a href="{esc(sign["creator_url"])}" style="color:{GRAPHITE}">{esc(sign["creator"])}</a>'
+    return esc(sign["creator"])
 
 
-def email_html(subject, preview, heading, heading_ar, intro, new, reviews, note):
-    parts = []
+def title(kicker, english, arabic):
+    return (f'<div style="font-size:12px;color:{GRAPHITE}">{kicker}</div>'
+            f'<div style="font-size:34px;font-weight:900;line-height:1.1;margin-top:6px">{esc(english)}</div>'
+            f'<div dir="rtl" style="font-size:26px;font-weight:bold;margin-top:2px;text-align:left">{esc(arabic)}</div>')
+
+
+def email_html(subject, preview, kicker, new, checks, note):
     if new:
-        tiles = [f'<td width="33%" valign="top" style="padding:4px"><table width="100%" cellpadding="0" cellspacing="0" '
-                 f'style="border:1px solid {STONE_DEEP};border-radius:8px"><tr><td align="center" style="padding:8px 6px 12px">'
-                 + (f'{gif_link(s, "Sign for " + s["english"])}<div style="font-size:16px;font-weight:bold;margin-top:8px">'
-                    if gif(s) else '<div style="font-size:16px;font-weight:bold;margin-top:4px">')
-                 + f'{esc(s["english"])}</div><div dir="rtl" style="font-size:15px;margin-top:2px">{esc(s["arabic"])}</div>'
-                 + ('' if gif(s) else f'<div style="margin-top:10px">{watch_button(s["video_url"])}</div>')
-                 + '</td></tr></table></td>' for s in new]
-        parts.append(section("NEW SIGNS", "إشارات جديدة", grid(tiles) + credits(new)))
-    if reviews:
-        # The alt text is just the number, so a blocked image doesn't give the answer away.
-        tiles = [f'<td width="33%" valign="top" align="center" style="padding:4px">{gif_link(s, f"Sign {i}")}'
-                 f'<div style="font-size:14px;font-weight:bold;margin-top:4px">{i}</div></td>'
-                 if gif(s) else
-                 f'<td width="33%" style="padding:4px"><a href="{esc(s["video_url"])}" style="display:block;'
-                 f'border:1px solid {INK};border-radius:6px;padding:8px 0;text-align:center;color:{INK};'
-                 f'text-decoration:none;font-size:14px;font-weight:bold">{i} &nbsp;▶</a></td>'
-                 if s["video_url"] else f'<td width="33%" style="padding:4px">{missing("ADD VIDEO LINK")}</td>'
-                 for i, (s, _) in enumerate(reviews, 1)]
-        parts.append(section("DO YOU REMEMBER?", "هل تتذكر؟",
-                             f'<div style="font-size:14px;margin-top:6px">Watch each one and say what it means. '
-                             f'Answers at the bottom.</div>{grid(tiles)}'))
-    parts.append(f'<tr><td style="padding:18px 28px 0"><div style="background:{PAPER};border-radius:8px;padding:14px 16px">'
-                 f'<div style="font-size:11px;font-weight:bold;letter-spacing:2px;color:{GRAPHITE}">DEAF CULTURE &nbsp;'
-                 f'<span dir="rtl" style="letter-spacing:0;font-size:13px">ثقافة الصم</span></div>'
-                 f'<div style="font-size:14px;margin-top:6px;line-height:1.5">'
-                 f'{esc(note) if note else missing("ADD A NOTE, CHECKED BY A DEAF ADVISOR")}</div></div></td></tr>')
-    if reviews:
-        # Same grid as the review buttons, so each answer sits where its question did.
-        answers = grid([f'<td width="33%" valign="top" style="padding:4px;font-size:13px;line-height:1.4">'
-                        f'<b>{i}</b> {esc(s["english"])}<br><span dir="rtl">{esc(s["arabic"])}</span></td>'
-                        for i, (s, _) in enumerate(reviews, 1)])
-        # A gap first, so the answers aren't on screen while you test yourself.
-        parts.append(f'<tr><td style="height:90px;font-size:12px;color:{GRAPHITE};text-align:center;'
-                     f'vertical-align:bottom">↓ answers ↓</td></tr>')
-        parts.append(f'<tr><td style="padding:6px 28px 0;color:{GRAPHITE}">{answers}</td></tr>')
+        parts = [row(title(kicker, new["english"], new["arabic"])
+                     + f'<div style="margin-top:18px;text-align:center">{gif_link(new, 240)}</div>'
+                     f'<div style="font-size:15px;line-height:1.5;margin-top:16px">Watch it a few times, then copy it '
+                     f'with your hands. Say the word as you sign it.</div>', 20)]
+    else:
+        parts = [row(title(kicker, "Practice day", "يوم المراجعة")
+                     + f'<div style="font-size:15px;line-height:1.5;margin-top:12px">No new sign today. Coming back to '
+                     f'a sign just as you start to forget it is what makes it stick.</div>', 20)]
+    if checks:
+        # Active recall: the word first, the GIF further down to compare against.
+        asks = "".join(f'<div style="font-size:22px;font-weight:900;margin-top:10px">{esc(s["english"])} &nbsp;'
+                       f'<span dir="rtl" style="font-size:19px;font-weight:bold">{esc(s["arabic"])}</span></div>'
+                       for s in checks)
+        parts.append(row(f'<div style="border-top:1px solid {HAIRLINE};padding-top:24px">{label("QUICK CHECK", "اختبر نفسك")}'
+                         f'<div style="font-size:15px;line-height:1.5;margin-top:8px">Can you sign '
+                         f'{"this" if len(checks) == 1 else "these"} from memory? Try first, then scroll down to check.'
+                         f'</div>{asks}</div>'))
+    if note:
+        parts.append(row(f'<div style="background:{SOFT};border-radius:12px;padding:16px 18px">{label("DEAF CULTURE", "ثقافة الصم")}'
+                         f'<div style="font-size:14px;margin-top:8px;line-height:1.55">{esc(note)}</div></div>'))
+    if checks:
+        # A gap first, so the answers aren't on screen while you try.
+        parts.append(f'<tr><td style="height:140px;font-size:12px;color:{GRAPHITE};text-align:center;'
+                     f'vertical-align:bottom">↓ check yourself ↓</td></tr>')
+        parts += [row(f'<div style="text-align:center">{gif_link(s, 200)}<div style="font-size:14px;font-weight:bold;'
+                      f'margin-top:6px">{esc(s["english"])} · <span dir="rtl">{esc(s["arabic"])}</span></div></div>', 16)
+                  for s in checks]
 
-    return f"""<!doctype html><html><head><meta charset="utf-8"><title>{esc(subject)}</title></head>
-<body style="margin:0;background:{PAPER};font-family:{FONT};color:{INK}">
+    first = new or checks[0]
+    return f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(subject)}</title></head>
+<body style="margin:0;background:#fff;font-family:{FONT};color:{INK}">
 <div style="display:none;max-height:0;overflow:hidden">{esc(preview)}</div>
-<table width="100%" cellpadding="0" cellspacing="0" style="background:{PAPER}"><tr><td align="center" style="padding:24px 12px">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#fff;border-radius:10px;overflow:hidden">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#fff"><tr><td align="center">
+<table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#fff">
   <tr><td>{stripe()}</td></tr>
-  <tr><td style="padding:16px 28px 0;font-size:12px;color:{GRAPHITE}"><b style="color:{INK}">1000 Hands · الف ايد</b>
-    &nbsp;·&nbsp; Learn Jordanian Sign Language in 5 minutes</td></tr>
-  <tr><td style="padding:14px 28px 0"><div style="font-size:24px;font-weight:900;line-height:1.2">{esc(heading)}
-    &nbsp;<span dir="rtl" style="font-size:19px;font-weight:bold">{esc(heading_ar)}</span></div>
-    <div style="font-size:14px;margin-top:8px;line-height:1.5">{intro}</div></td></tr>
+  <tr><td style="padding:16px 24px 0;font-size:15px;font-weight:900">1000 Hands &nbsp;<span dir="rtl">الف ايد</span></td></tr>
   {"".join(parts)}
-  <tr><td style="padding:24px 28px 20px;font-size:12px;color:{GRAPHITE};line-height:1.5">
-    Questions, or want to sign for us? Reply, or write to <a href="mailto:{CONTACT}" style="color:{INK}">{CONTACT}</a>.<br>
+  <tr><td style="padding:36px 24px 24px;font-size:12px;color:{GRAPHITE};line-height:1.6">
+    Signs from {credit(first)}. Tap a sign to watch the full video.<br>
+    Questions, or want to sign for us? Just reply, or write to <a href="mailto:{CONTACT}" style="color:{GRAPHITE}">{CONTACT}</a>.<br>
     <a href="{UNSUBSCRIBE}" style="color:{GRAPHITE}">Unsubscribe</a>
   </td></tr>
   <tr><td>{stripe(4)}</td></tr>
@@ -203,71 +189,58 @@ def email_html(subject, preview, heading, heading_ar, intro, new, reviews, note)
 def main():
     signs = read_csv("signs.csv")
     notes = {int(r["lesson"]): r["culture_note"] for r in read_csv("lessons.csv") if r["lesson"]}
-    by_lesson = defaultdict(list)
-    for s in signs:
-        by_lesson[int(s["lesson"])].append(s)
-    lessons = sorted(by_lesson)
-    assert lessons == list(range(1, len(lessons) + 1)), "lesson numbers in signs.csv must run 1, 2, 3, ... with no gaps"
+    order = [int(s["lesson"]) for s in signs]
+    assert order == sorted(order), "signs.csv must be in lesson order"
 
     os.makedirs(OUT, exist_ok=True)
     for f in os.listdir(OUT):
         os.remove(os.path.join(OUT, f))
 
-    plan, prev_week, todo, sends = [], 0, set(), []
-    emails = schedule(lessons, {n: len(by_lesson[n]) for n in lessons})
-    for i, (week, lesson, due) in enumerate(emails, 1):
-        reviews = [(s, gap) for taught, gap in due for s in by_lesson[taught]]
-        # Mixed up so the order doesn't give the answers away; seeded so rebuilds don't change it.
-        random.Random(i).shuffle(reviews)
-        if lesson:
-            new, first = by_lesson[lesson], by_lesson[lesson][0]
-            heading, heading_ar = f"Lesson {lesson} · {first['theme']}", first["theme_ar"]
-            count = {3: "Three", 4: "Four"}.get(len(new), str(len(new)))
-            subject = f"Lesson {lesson}: {first['theme']} · {len(new)} signs, 5 minutes"
-            preview = f"{count} new signs" + (f", and {len(reviews)} to review." if reviews else ".")
-            intro = f"{count} new signs this week. Watch each one a few times and copy it with your hands."
-            name = f"{i:02d}-lesson-{lesson}"
+    plan, todo, sends = [], set(), []
+    emails = schedule(len(signs))
+    for i, (slot, taught, due) in enumerate(emails, 1):
+        day = (slot - 1) * SEND_EVERY
+        checks = [signs[t - 1] for t in due]
+        new = signs[taught - 1] if taught else None
+        note = ""
+        if new:
+            # Each theme's culture note comes with its first sign.
+            if taught == 1 or signs[taught - 2]["lesson"] != new["lesson"]:
+                note = notes.get(int(new["lesson"]), "")
+            kicker = f"Sign {taught} of {len(signs)} · {esc(new['theme'])}"
+            subject = f"{new['english']} · {new['arabic']} (sign {taught} of {len(signs)})"
+            preview = "One new sign, one minute." + (" Plus a quick check." if checks else "")
+            name = f"{i:02d}-sign-{taught}-{slug(new['english'])}"
+            if not new["video_url"]:
+                todo.add((taught, f"Video link: {new['english']}"))
+            if not new["creator"]:
+                todo.add((taught, f"Credit: {new['english']}"))
         else:
-            new = []
-            heading, heading_ar = "Review week", "أسبوع المراجعة"
-            subject = f"Review: keep {len(reviews)} signs fresh"
-            preview = "No new signs this time. Just a quick test of what you know."
-            intro = "No new signs this time. Spacing out your practice like this is what makes signs stick."
-            name = f"{i:02d}-review"
-        note = notes.get(lesson, "") if lesson else ""
-        body = email_html(subject, preview, heading, heading_ar, intro, new, reviews, note)
+            kicker = f"Day {day + 1}"
+            subject = f"Practice day: can you still sign {checks[0]['english']}?"
+            preview = "No new sign today. Just a one-minute check."
+            name = f"{i:02d}-practice"
+        body = email_html(subject, preview, kicker, new, checks, note)
         open(os.path.join(OUT, name + ".html"), "w", encoding="utf-8").write(
             body.replace(UNSUBSCRIBE, "#").replace(GIFS, "../gifs/"))
-        sends.append({"day": (week - 1) * 7, "subject": subject, "html": body.replace(GIFS, GIF_BASE)})
-
-        for s in new:
-            if not s["video_url"]:
-                todo.add((lesson, f"Video link: {s['english']}"))
-            if not s["creator"]:
-                todo.add((lesson, f"Credit: {s['english']}"))
-        if not note and lesson:
-            todo.add((lesson, "Deaf culture note"))
-        if GIFS in body and not GIF_BASE:
-            todo.add((0, "Upload gifs/ online and set GIF_BASE in build_course.py"))
-        review_desc = ", ".join(f"lesson {t} ({g} wk ago)" for t, g in due) or "—"
-        plan.append((i, week, week - prev_week, name, subject,
-                     ", ".join(s["english"] for s in new) or "—", review_desc))
-        prev_week = week
+        sends.append({"day": day, "subject": subject, "html": body.replace(GIFS, GIF_BASE)})
+        plan.append((i, day, name, subject, new["english"] if new else "—",
+                     ", ".join(s["english"] for s in checks) or "—"))
 
     rows = "".join(
-        f'<tr><td>{i}</td><td>{w}</td><td>{"at signup" if i == 1 else f"{g} week" + ("s" if g > 1 else "")}</td>'
+        f'<tr><td>{i}</td><td>{"at signup" if d == 0 else d}</td>'
         f'<td><a href="emails/{n}.html">{esc(subj)}</a></td><td>{esc(new)}</td><td>{esc(rev)}</td></tr>'
-        for i, w, g, n, subj, new, rev in plan)
-    todo_html = "".join(f"<li>{f'Lesson {n}' if n else 'All emails'}: {esc(t)}</li>" for n, t in sorted(todo)) or "<li>Nothing. Ready to paste into Apps Script.</li>"
+        for i, d, n, subj, new, rev in plan)
+    todo_html = "".join(f"<li>Sign {n}: {esc(t)}</li>" for n, t in sorted(todo)) or "<li>Nothing. Ready to paste into Apps Script.</li>"
     open(os.path.join(HERE, "course-plan.html"), "w", encoding="utf-8").write(f"""<!doctype html><html><head>
 <meta charset="utf-8"><title>Sign course plan</title><style>
-body{{font-family:{FONT};background:{PAPER};color:{INK};margin:0;padding:28px}} h1{{margin:0 0 4px}}
-table{{border-collapse:collapse;background:#fff;width:100%;margin-top:16px}} td,th{{border:1px solid {STONE_DEEP};padding:7px 9px;
+body{{font-family:{FONT};background:#fff;color:{INK};margin:0;padding:28px}} h1{{margin:0 0 4px}}
+table{{border-collapse:collapse;background:#fff;width:100%;margin-top:16px}} td,th{{border:1px solid {HAIRLINE};padding:7px 9px;
 text-align:left;font-size:14px;vertical-align:top}} th{{background:{INK};color:#fff}} .sub{{color:{GRAPHITE}}}
 </style></head><body><h1>1000 Hands sign course</h1>
-<div class="sub">{len(emails)} emails over {emails[-1][0]} weeks · {len(signs)} signs · each sign reviewed
-{", ".join(str(g) for g in REVIEW_AFTER)} weeks after it's taught</div>
-<table><tr><th>#</th><th>Week</th><th>Wait before it</th><th>Email (click to preview)</th><th>New signs</th><th>Reviews</th></tr>
+<div class="sub">{len(emails)} emails, one every {SEND_EVERY} days, over {plan[-1][1]} days · {len(signs)} signs, one per email ·
+each sign checked {", ".join(str(g) for g in REVIEW_AFTER)} emails after it's taught</div>
+<table><tr><th>#</th><th>Day</th><th>Email (click to preview)</th><th>New sign</th><th>Quick check</th></tr>
 {rows}</table><h2>Still missing ({len(todo)})</h2><ul>{todo_html}</ul></body></html>""")
     os.makedirs(os.path.join(HERE, "apps-script"), exist_ok=True)
     sender = open(os.path.join(HERE, "sender.gs"), encoding="utf-8").read()
@@ -281,7 +254,7 @@ text-align:left;font-size:14px;vertical-align:top}} th{{background:{INK};color:#
         f"const EMAILS = JSON.parse(Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(\n{lines}\n  ''),\n"
         "  'application/x-gzip')).getDataAsString('UTF-8'));\n\n"
         f"{sender}")
-    print(f"{len(emails)} emails over {emails[-1][0]} weeks; {len(todo)} items still missing. Open course-plan.html.")
+    print(f"{len(emails)} emails over {plan[-1][1]} days; {len(todo)} items still missing. Open course-plan.html.")
 
 
 if __name__ == "__main__":

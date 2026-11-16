@@ -1,8 +1,8 @@
 1000 Hands · الف ايد · FREE SIGN COURSE BY EMAIL
 
 A spaced-repetition JSL course. Every subscriber starts at lesson 1 the day they sign up.
-8 lessons teach 3 signs each (24 signs). Every sign comes back for review 1, 3 and 7 weeks
-after it is taught. 12 emails over 15 weeks, then it ends by itself.
+One new sign every 3 days (24 signs). Each sign comes back as a quick check 2, 5 and 12 emails
+after it is taught (about 1, 2 and 5 weeks). 38 emails over about 4 months, then it ends by itself.
 
 It costs nothing to run. It lives in the liu.thousandhands@gmail.com Google account: a Google
 Form for sign-ups, a Google Sheet that remembers who got what, and a small Apps Script that sends

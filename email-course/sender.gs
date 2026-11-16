@@ -20,8 +20,8 @@ function setup() {
   const ss = SpreadsheetApp.getActive();
   if (!ss.getSheets().some(s => s.getFormUrl())) {
     const form = FormApp.create('Learn JSL with 1000 Hands · تعلّم لغة الإشارة الأردنية')
-      .setDescription('A free course by email: 3 Jordanian Sign Language signs a week, in 5 minutes, ' +
-                      'with reviews spaced out so they stick. Signs from the Dictionary of Jordanian ' +
+      .setDescription('A free course by email: one Jordanian Sign Language sign every 3 days, in a minute, ' +
+                      'with quick checks spaced out so they stick. Signs from the Dictionary of Jordanian ' +
                       'Sign Language (SooSL).')
       .setEmailCollectionType(FormApp.EmailCollectionType.RESPONDER_INPUT)
       .setConfirmationMessage('You\'re in! Lesson 1 is on its way. Check your inbox (and spam, just in case).');
