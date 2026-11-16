@@ -454,19 +454,18 @@ class _LetterCard extends StatelessWidget {
         color: color,
         child: Column(
           children: [
-            Container(
+            // The hand is cut out on transparency, so the card's colour shows through.
+            Image.asset(
+              'assets/letters/${letterSlugs[letter]}.png',
               width: 104,
               height: 104,
-              color: Colors.white,
-              alignment: Alignment.center,
-              child: Image.asset(
-                'assets/letters/${letterSlugs[letter]}.gif',
-                fit: BoxFit.cover,
-                width: 104,
-                height: 104,
-                errorBuilder: (_, _, _) => Text(
-                  letter,
-                  style: GoogleFonts.tajawal(fontSize: 56, fontWeight: FontWeight.w900, color: color, height: 1),
+              errorBuilder: (_, _, _) => SizedBox.square(
+                dimension: 104,
+                child: Center(
+                  child: Text(
+                    letter,
+                    style: GoogleFonts.tajawal(fontSize: 56, fontWeight: FontWeight.w900, color: Colors.white, height: 1),
+                  ),
                 ),
               ),
             ),

@@ -6,8 +6,9 @@ void main() {
     expect(spellableLetters('  سارة   علي '), ['س', 'ا', 'ر', 'ة', ' ', 'ع', 'ل', 'ي']);
   });
 
-  test('hamza seats and alif maqsura use their base letter', () {
-    expect(spellableLetters('أمل'), ['ا', 'م', 'ل']);
+  test('madda and alif maqsura use their base letter; hamza seats keep their own', () {
+    expect(spellableLetters('أمل'), ['أ', 'م', 'ل']);
+    expect(spellableLetters('آمال'), ['ا', 'م', 'ا', 'ل']);
     expect(spellableLetters('هدى'), ['ه', 'د', 'ي']);
   });
 

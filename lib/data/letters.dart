@@ -9,13 +9,14 @@ const letterSlugs = {
   'د': 'dal', 'ذ': 'dhal', 'ر': 'ra', 'ز': 'zay', 'س': 'sin', 'ش': 'shin', 'ص': 'sad',
   'ض': 'dad', 'ط': 'taa', 'ظ': 'zaa', 'ع': 'ayn', 'غ': 'ghayn', 'ف': 'fa', 'ق': 'qaf',
   'ك': 'kaf', 'ل': 'lam', 'م': 'mim', 'ن': 'nun', 'ه': 'ha', 'و': 'waw', 'ي': 'ya',
-  'ة': 'ta-marbuta', 'ء': 'hamza',
+  'ة': 'ta-marbuta', 'ء': 'hamza', 'أ': 'alif-hamza', 'إ': 'alif-hamza-below',
+  'ؤ': 'waw-hamza', 'ئ': 'ya-hamza',
 };
 
 /// Letters spelled with another letter's handshape.
-// shortcut: hamza seats and alif maqsura borrow their base letter's sign.
+// shortcut: madda and alif maqsura borrow their base letter's sign.
 // Check each with a Deaf signer, and give one its own clip if JSL has one.
-const letterFallbacks = {'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ى': 'ي', 'ئ': 'ي', 'ؤ': 'و'};
+const letterFallbacks = {'آ': 'ا', 'ى': 'ي'};
 
 /// The letters of [name] that can be fingerspelled, in reading order.
 /// A space stays as ' ' so names keep their word breaks; anything else is dropped.
