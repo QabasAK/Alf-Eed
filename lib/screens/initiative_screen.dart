@@ -1,13 +1,14 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/link.dart';
 import '../data/initiative.dart';
+import '../data/letters.dart';
 import '../theme/app_colors.dart';
 import '../widgets/liu_logo.dart';
-import '../widgets/logo_panel.dart';
 
 /// The الف ايد home page: the initiative that the engineering lexicon is
 /// the first field of.
@@ -20,7 +21,6 @@ class InitiativeScreen extends StatefulWidget {
 
 class _InitiativeScreenState extends State<InitiativeScreen> {
   final _fieldsKey = GlobalKey();
-  final _universitiesKey = GlobalKey();
   final _toolkitKey = GlobalKey();
 
   void _scrollTo(GlobalKey key) => Scrollable.ensureVisible(
@@ -32,7 +32,7 @@ class _InitiativeScreenState extends State<InitiativeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // The initiative is neutral ink on paper: blue belongs to engineering,
+    // The initiative is black and white: blue belongs to engineering,
     // and colour on this page only ever means a field.
     return Theme(
       data: theme.copyWith(
@@ -45,19 +45,19 @@ class _InitiativeScreenState extends State<InitiativeScreen> {
         ),
       ),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.white,
         body: SingleChildScrollView(
           child: Column(
             children: [
               _NavBar(
                 onFields: () => _scrollTo(_fieldsKey),
-                onUniversities: () => _scrollTo(_universitiesKey),
                 onToolkit: () => _scrollTo(_toolkitKey),
               ),
               const SizedBox(height: 6, child: _FieldStripes()),
               _Hero(onToolkit: () => _scrollTo(_toolkitKey)),
+              const SizedBox(height: 6, child: _FieldStripes()),
+              const _SignYourName(),
               _FieldsSection(key: _fieldsKey, onClaim: () => _scrollTo(_toolkitKey)),
-              _UniversitiesSection(key: _universitiesKey),
               _ToolkitSection(key: _toolkitKey),
               const _Footer(),
             ],
@@ -69,6 +69,12 @@ class _InitiativeScreenState extends State<InitiativeScreen> {
 }
 
 // ── Shared pieces ─────────────────────────────────────────────────────────────
+
+/// Neutral grey for card outlines and dividers on the white bands.
+const _hairline = Color(0xFFE5E5E5);
+
+/// The i's dot in the الف ايد logo: one band per field, as wide as its count.
+final _fieldBands = [for (final field in initiativeFields) (field.color, field.count)];
 
 /// Every field's colour side by side, each as wide as its term count.
 class _FieldStripes extends StatelessWidget {
@@ -196,10 +202,9 @@ class _ExternalButton extends StatelessWidget {
 
 class _NavBar extends StatelessWidget {
   final VoidCallback onFields;
-  final VoidCallback onUniversities;
   final VoidCallback onToolkit;
 
-  const _NavBar({required this.onFields, required this.onUniversities, required this.onToolkit});
+  const _NavBar({required this.onFields, required this.onToolkit});
 
   @override
   Widget build(BuildContext context) {
@@ -207,16 +212,15 @@ class _NavBar extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.border)),
+        border: Border(bottom: BorderSide(color: _hairline)),
       ),
       padding: EdgeInsets.symmetric(horizontal: width > 760 ? 40 : 20, vertical: 14),
       child: Row(
         children: [
-          const LiuLogo(width: 64, variant: LiuLogoVariant.wordmark, accent: AppColors.ink),
+          LiuLogo(width: 64, variant: LiuLogoVariant.wordmark, dotBands: _fieldBands, showRule: false),
           const Spacer(),
           if (width > 760) ...[
             TextButton(onPressed: onFields, child: const Text('Fields  •  التخصصات')),
-            TextButton(onPressed: onUniversities, child: const Text('Universities  •  الجامعات')),
             const SizedBox(width: 12),
           ],
           ElevatedButton(
@@ -314,15 +318,161 @@ class _Hero extends StatelessWidget {
                   children: [
                     Expanded(child: copy),
                     const SizedBox(width: 64),
-                    const LogoPanel(
-                      logoWidth: 220,
-                      variant: LiuLogoVariant.wordmark,
-                      accent: AppColors.ink,
-                      offsetBlock: _FieldStripes(),
+                    Container(
+                      padding: const EdgeInsets.all(220 * 0.28),
+                      color: AppColors.ink,
+                      child: LiuLogo(
+                        width: 220,
+                        variant: LiuLogoVariant.wordmark,
+                        color: Colors.white,
+                        dotBands: _fieldBands,
+                        showRule: false,
+                      ),
                     ),
                   ],
                 )
               : copy,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Sign your name ────────────────────────────────────────────────────────────
+
+/// Type a name in Arabic and see it fingerspelled, one handshape per letter.
+class _SignYourName extends StatefulWidget {
+  const _SignYourName();
+
+  @override
+  State<_SignYourName> createState() => _SignYourNameState();
+}
+
+class _SignYourNameState extends State<_SignYourName> {
+  final _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width > 760;
+    // Until someone types, spell "your name" so the cards show what to expect.
+    final letters = spellableLetters(_name.text.trim().isEmpty ? 'اسمك' : _name.text);
+    var colourIndex = 0;
+
+    final intro = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _Heading(
+          english: 'Sign your name.',
+          arabic: 'اكتب اسمك بالإشارة',
+          body: 'Type your name in Arabic and see it fingerspelled in Jordanian Sign Language, one handshape per letter.',
+          arabicBody: 'اكتب اسمك بالعربية وشاهده بأبجدية الأصابع في لغة الإشارة الأردنية، حرفاً حرفاً.',
+        ),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: 360,
+          child: TextField(
+            controller: _name,
+            onChanged: (_) => setState(() {}),
+            textDirection: TextDirection.rtl,
+            textAlign: TextAlign.right,
+            maxLength: 24,
+            // Arabic letters and spaces only: the alphabet has no other handshapes.
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[ء-ي ]'))],
+            style: GoogleFonts.tajawal(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink),
+            decoration: const InputDecoration(
+              hintText: 'اكتب اسمك',
+              hintTextDirection: TextDirection.rtl,
+              counterText: '',
+              filled: true,
+              fillColor: Colors.white,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(color: AppColors.ink, width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(color: AppColors.ink, width: 3),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final cards = Wrap(
+      textDirection: TextDirection.rtl,
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final letter in letters)
+          if (letter == ' ')
+            const SizedBox(width: 24, height: 1)
+          else
+            _LetterCard(letter: letter, color: initiativeFields[colourIndex++ % initiativeFields.length].color),
+      ],
+    );
+
+    return _Band(
+      color: Colors.white,
+      child: isWide
+          ? Row(
+              children: [
+                Expanded(flex: 5, child: intro),
+                const SizedBox(width: 56),
+                // Right-aligned, so the name starts at the right edge like Arabic text.
+                Expanded(flex: 6, child: Align(alignment: Alignment.centerRight, child: cards)),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [intro, const SizedBox(height: 32), cards],
+            ),
+    );
+  }
+}
+
+/// One letter's handshape on a field-coloured card. Until the letter's clip is
+/// in assets/letters/, the card shows the letter itself.
+class _LetterCard extends StatelessWidget {
+  final String letter;
+  final Color color;
+  const _LetterCard({required this.letter, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Handshape for $letter',
+      child: Container(
+        width: 120,
+        padding: const EdgeInsets.all(8),
+        color: color,
+        child: Column(
+          children: [
+            Container(
+              width: 104,
+              height: 104,
+              color: Colors.white,
+              alignment: Alignment.center,
+              child: Image.asset(
+                'assets/letters/${letterSlugs[letter]}.gif',
+                fit: BoxFit.cover,
+                width: 104,
+                height: 104,
+                errorBuilder: (_, _, _) => Text(
+                  letter,
+                  style: GoogleFonts.tajawal(fontSize: 56, fontWeight: FontWeight.w900, color: color, height: 1),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(letter, style: GoogleFonts.tajawal(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+          ],
         ),
       ),
     );
@@ -504,89 +654,6 @@ class _CardBack extends StatelessWidget {
   }
 }
 
-// ── University adoption ───────────────────────────────────────────────────────
-
-class _UniversitiesSection extends StatelessWidget {
-  const _UniversitiesSection({super.key});
-
-  static const _asks = [
-    (Icons.link_rounded, 'Link it', 'اربطه',
-        'Put the lexicon on your accessibility or student services page.',
-        'أضف القاموس إلى صفحة شؤون الطلبة أو ذوي الإعاقة في جامعتك.'),
-    (Icons.school_rounded, 'Teach with it', 'درّس به',
-        'One instructor, one course, one semester. That\'s a real start.',
-        'مدرّس واحد ومادة واحدة وفصل واحد. هذه بداية حقيقية.'),
-    (Icons.volunteer_activism_rounded, 'Back a field', 'ادعم تخصصاً',
-        'Lend subject experts and filming space, and fund fair pay for Deaf signers.',
-        'وفّر خبراء في التخصص ومكاناً للتصوير، وادعم أجراً عادلاً للمؤدين الصمّ.'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return _Band(
-      color: AppColors.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _Heading(
-            english: 'Bring it to your university.',
-            arabic: 'انقله إلى جامعتك',
-            body: 'The lexicon does the most good where Deaf students already study. Adopting it can be as small as one link.',
-            arabicBody: 'يفيد القاموس أكثر حيث يدرس الطلبة الصمّ فعلاً، وقد يبدأ اعتماده برابط واحد.',
-          ),
-          const SizedBox(height: 40),
-          Wrap(
-            spacing: 20,
-            runSpacing: 20,
-            children: [
-              for (final (icon, en, ar, body, arBody) in _asks)
-                Container(
-                  width: 320,
-                  padding: const EdgeInsets.all(24),
-                  color: AppColors.background,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(icon, color: AppColors.ink, size: 32),
-                      const SizedBox(height: 16),
-                      Text(en, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(ar,
-                            textDirection: TextDirection.rtl,
-                            style: GoogleFonts.tajawal(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(body, style: GoogleFonts.inter(fontSize: 13, color: AppColors.textSecondary, height: 1.5)),
-                      const SizedBox(height: 6),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(arBody,
-                            textDirection: TextDirection.rtl,
-                            style: GoogleFonts.tajawal(fontSize: 13, color: AppColors.textSecondary, height: 1.6)),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              const _ToolkitButton(label: 'Get the one-page pitch  •  حمّل الصفحة التعريفية'),
-              if (contactUrl != null)
-                _ExternalButton(url: contactUrl!, label: 'Talk to us  •  تواصل معنا', color: AppColors.ink),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── Start your own ────────────────────────────────────────────────────────────
 
 class _ToolkitSection extends StatelessWidget {
@@ -603,7 +670,7 @@ class _ToolkitSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _Band(
-      color: AppColors.stone,
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -661,7 +728,7 @@ class _SkillGrid extends StatelessWidget {
                       Container(
                         width: width,
                         padding: const EdgeInsets.all(16),
-                        color: AppColors.surface,
+                        decoration: BoxDecoration(border: Border.all(color: _hairline)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -705,7 +772,7 @@ class _Footer extends StatelessWidget {
         spacing: 20,
         runSpacing: 12,
         children: [
-          const LiuLogo(width: 44, variant: LiuLogoVariant.wordmark, color: Colors.white, accent: Colors.white),
+          LiuLogo(width: 44, variant: LiuLogoVariant.wordmark, color: Colors.white, dotBands: _fieldBands, showRule: false),
           Text(
             '1000 Hands  •  الف ايد',
             style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),

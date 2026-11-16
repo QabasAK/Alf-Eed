@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
@@ -24,12 +26,21 @@ class LiuLogo extends StatelessWidget {
   final Color color;
   final Color accent;
 
+  /// Splits the i's dot into vertical bands, each as wide as its weight.
+  /// The الف ايد initiative passes one band per field; LIU leaves it null.
+  final List<(Color, int)>? dotBands;
+
+  /// The accent rule under the Arabic wordmark.
+  final bool showRule;
+
   const LiuLogo({
     super.key,
     required this.width,
     this.variant = LiuLogoVariant.full,
     this.color = AppColors.ink,
     this.accent = AppColors.blue,
+    this.dotBands,
+    this.showRule = true,
   });
 
   @override
@@ -37,7 +48,7 @@ class LiuLogo extends StatelessWidget {
     final mark = SizedBox(
       width: width,
       height: width * _LiuMarkPainter.aspect,
-      child: CustomPaint(painter: _LiuMarkPainter(color: color, accent: accent)),
+      child: CustomPaint(painter: _LiuMarkPainter(color: color, accent: accent, dotBands: dotBands)),
     );
     if (variant == LiuLogoVariant.mark) return mark;
 
@@ -65,8 +76,10 @@ class LiuLogo extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: width * 0.03),
-            Container(height: width * 0.055, color: accent),
+            if (showRule) ...[
+              SizedBox(height: width * 0.03),
+              Container(height: width * 0.055, color: accent),
+            ],
             if (variant == LiuLogoVariant.full) ...[
               SizedBox(height: width * 0.06),
               Text(
@@ -97,8 +110,9 @@ class _LiuMarkPainter extends CustomPainter {
 
   final Color color;
   final Color accent;
+  final List<(Color, int)>? dotBands;
 
-  const _LiuMarkPainter({required this.color, required this.accent});
+  const _LiuMarkPainter({required this.color, required this.accent, this.dotBands});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -119,10 +133,23 @@ class _LiuMarkPainter extends CustomPainter {
       ..addRect(r(8, 6, 14, 8))
       ..addRect(r(12, 0, 14, 8));
     canvas.drawPath(glyphs, Paint()..color = color);
-    // i (tittle) — the only accent block
-    canvas.drawRect(r(5, 0, 7, 2), Paint()..color = accent);
+    // i (tittle): the only accent block, or one band per field
+    final bands = dotBands;
+    if (bands == null || bands.isEmpty) {
+      canvas.drawRect(r(5, 0, 7, 2), Paint()..color = accent);
+      return;
+    }
+    final total = bands.fold<int>(0, (sum, b) => sum + b.$2);
+    var left = 5.0;
+    for (final (bandColor, weight) in bands) {
+      final right = left + 2 * weight / total;
+      // Overlap the next band slightly so no seam shows between them.
+      canvas.drawRect(r(left, 0, math.min(right + 0.02, 7), 2), Paint()..color = bandColor);
+      left = right;
+    }
   }
 
   @override
-  bool shouldRepaint(_LiuMarkPainter old) => old.color != color || old.accent != accent;
+  bool shouldRepaint(_LiuMarkPainter old) =>
+      old.color != color || old.accent != accent || old.dotBands != dotBands;
 }
