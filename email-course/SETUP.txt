@@ -1,0 +1,64 @@
+1000 Hands · الف ايد · FREE SIGN COURSE BY EMAIL
+
+A spaced-repetition JSL course. Every subscriber starts at lesson 1 the day they sign up.
+8 lessons teach 3 signs each (24 signs). Every sign comes back for review 1, 3 and 7 weeks
+after it is taught. 12 emails over 15 weeks, then it ends by itself.
+
+It costs nothing to run. It lives in the liu.thousandhands@gmail.com Google account: a Google
+Form for sign-ups, a Google Sheet that remembers who got what, and a small Apps Script that sends
+the emails from that Gmail address. No subscriber cap, no domain, no paid plan. The only limit:
+a free Gmail account can send about 100 script emails a day, and the script stays under that. If
+more people are due on one day, the rest get their email the next day.
+
+WHAT'S IN HERE
+
+  signs.csv          The signs. Open in Excel or Google Sheets. One row per sign.
+                     Fill in video_url, creator (their name) and creator_url (their Instagram).
+                     The sign names are suggestions; change anything.
+  lessons.csv        One Deaf culture note per lesson. Write them with, or have them checked
+                     by, a Deaf advisor.
+  build_course.py    Turns the files into the course. Run:  python build_course.py
+  sender.gs          The sending logic (you don't need to touch it).
+  course-plan.html   The whole schedule, plus a list of everything still missing.
+  emails/            A preview of every email. Open them in a browser.
+  apps-script/Code.gs   The finished script to paste into Google (the course + sender.gs).
+
+BEFORE YOU LAUNCH
+
+  1. Ask 2–3 Deaf creators or interpreters for permission to link their videos. Link to their
+     original post; never download, cut or re-upload their clips.
+  2. Fill in signs.csv and lessons.csv, run build_course.py, and check course-plan.html says
+     "Nothing" is missing.
+  3. Have a Deaf advisor look over the emails once before anything goes out.
+
+SETTING IT UP (once, about 20 minutes, signed in as liu.thousandhands@gmail.com)
+
+  1. Google Forms → new form "Learn JSL with 1000 Hands".
+     Settings → Responses → Collect email addresses → "Responder input" (so anyone can type
+     their email, without signing in to Google). You don't need any other questions.
+  2. In the form: Responses → "Link to Sheets" → create a new spreadsheet.
+  3. In that spreadsheet: Extensions → Apps Script. Delete what's there, paste ALL of
+     apps-script/Code.gs, and click Save.
+  4. Choose "setup" in the function menu at the top and click Run.
+     Google will ask you to authorise it, and may warn "Google hasn't verified this app".
+     That's normal for your own script: Advanced → "Go to … (unsafe)" → Allow.
+     This creates the Progress tab and makes the script run every morning and after each sign-up.
+  5. Make the unsubscribe link work: Deploy → New deployment → type "Web app" →
+     Execute as "Me", Who has access "Anyone" → Deploy. (Until you do this, the unsubscribe
+     link opens an email to you instead.)
+  6. Test: choose "sendTestToMe" and Run. All 12 emails arrive in the inbox. Check the
+     links and how it looks on your phone.
+  7. Share the form's link (Send → link icon) on Instagram and, later, on the website.
+
+  The Progress tab shows every subscriber, how many emails they've had, and if they unsubscribed.
+  Don't edit or reorder it by hand.
+
+CHANGING THE COURSE LATER
+
+  Edit signs.csv or lessons.csv, run build_course.py, and paste the new apps-script/Code.gs over
+  the old one in Apps Script (Save; no need to run setup again). People already on the course
+  carry on from where they are with the new content. To add lessons, add rows with lesson 9,
+  10, ...; the review emails at the end move automatically.
+
+  Tip: ask subscribers to reply "hi" to the first email or add the address to their contacts,
+  so later lessons don't land in spam.
