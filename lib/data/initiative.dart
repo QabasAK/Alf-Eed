@@ -17,7 +17,7 @@ class InitiativeField {
   final String englishJoke;
   final String arabicJoke;
 
-  /// Where the field's lexicon lives. Null means nobody has claimed it yet.
+  /// URL of the field's live lexicon. Null means nobody has claimed it yet.
   final String? route;
 
   const InitiativeField({
@@ -39,7 +39,7 @@ const List<InitiativeField> initiativeFields = [
     arabicName: 'الهندسة',
     englishJoke: 'The answer to life, the universe and everything. It also splits nicely into three.',
     arabicJoke: 'جواب الحياة والكون وكل شيء، ويقبل القسمة على ثلاثة أيضاً.',
-    route: '/engineering',
+    route: engineeringLexiconUrl,
   ),
   InitiativeField(
     count: 57,
@@ -90,6 +90,12 @@ const List<InitiativeField> initiativeFields = [
     arabicJoke: 'كتب فيتروفيوس عشرة كتب في العمارة، وما زال الجميع يقتبس الكلمات الثلاث نفسها.',
   ),
 ];
+
+/// The live LIU lexicon, deployed on its own from the jslexicon repo.
+const String engineeringLexiconUrl = 'https://liu-lexicon.pages.dev';
+
+/// The rotatable 3D letters, served from web/signs3d.html.
+const String letters3dPath = 'signs3d.html';
 
 /// Served from web/toolkit/. Rebuild it with: python tool/build_toolkit.py
 const String toolkitPath = 'toolkit/1000-hands-toolkit.zip';

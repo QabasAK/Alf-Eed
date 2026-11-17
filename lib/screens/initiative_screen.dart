@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/link.dart';
 import '../data/initiative.dart';
@@ -287,11 +286,14 @@ class _Hero extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            ElevatedButton.icon(
-              onPressed: () => context.go('/engineering'),
-              icon: const Icon(Icons.arrow_forward_rounded, size: 20),
-              iconAlignment: IconAlignment.end,
-              label: const Text('Engineering lexicon  •  القاموس الهندسي'),
+            Link(
+              uri: Uri.parse(engineeringLexiconUrl),
+              builder: (context, followLink) => ElevatedButton.icon(
+                onPressed: followLink,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 20),
+                iconAlignment: IconAlignment.end,
+                label: const Text('Engineering lexicon  •  القاموس الهندسي'),
+              ),
             ),
             OutlinedButton(
               onPressed: onToolkit,
@@ -400,6 +402,15 @@ class _SignYourNameState extends State<_SignYourName> {
                 borderSide: BorderSide(color: AppColors.ink, width: 3),
               ),
             ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Link(
+          uri: Uri.base.resolve(letters3dPath),
+          builder: (context, followLink) => TextButton.icon(
+            onPressed: followLink,
+            icon: const Icon(Icons.threed_rotation_rounded, size: 20),
+            label: const Text('Confused about a letter? Take a look from a different angle\nمحتار بحرف؟ شوفه من زاوية ثانية'),
           ),
         ),
       ],
@@ -638,10 +649,13 @@ class _CardBack extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         route != null
-            ? ElevatedButton(
-                onPressed: () => context.go(route),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: field.color),
-                child: const Text('Open it  •  افتح'),
+            ? Link(
+                uri: Uri.parse(route),
+                builder: (context, followLink) => ElevatedButton(
+                  onPressed: followLink,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: field.color),
+                  child: const Text('Open it  •  افتح'),
+                ),
               )
             : OutlinedButton(
                 onPressed: onClaim,
