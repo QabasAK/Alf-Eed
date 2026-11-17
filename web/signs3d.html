@@ -49,6 +49,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 // Same colours as the fields on the site, cycled per letter.
 const FIELD_COLOURS = ['#2A44B5', '#C62F3B', '#6B3FA0', '#3F7D20', '#0B7A8C', '#A8246B', '#B4530F'];
@@ -58,63 +59,62 @@ const FIELD_COLOURS = ['#2A44B5', '#C62F3B', '#6B3FA0', '#3F7D20', '#0B7A8C', '#
 // [knuckle, middle joint, tip joint, spread] in degrees; bending is toward the palm.
 // The thumb is [lift toward palm, twist, swing toward the fingers (negative = out), bend 1, bend 2 (negative = toward the palm)].
 // The wrist is the whole hand's rotation [x, y, z].
-const UP = [0, 0, 0], CURL = [85, 100, 55], FLAT = [88, 0, 0], CUP = [40, 45, 25];
-const T = {  // tuned on the WebXR hand, whose relaxed thumb already points up and out
-  up:   [5, 0, 40, 0, 0],          // thumbs-up along the fist
+const UP = [0, 0, 0], CURL = [95, 110, 80];
+const T = {  // tuned on the WebXR hand, whose relaxed thumb pointed up and out; they still read right on the current hand
   out:  [0, 0, -35, 0, 0],         // straight out to the side
   tuck: [65, 0, 70, -45, -35],     // across the front of the curled fingers
-  side: [15, 0, 35, -10, 0],       // resting against the side of the fist
-  palm: [65, 0, 70, -45, -35],     // folded into the palm under straight fingers
-  c:    [30, 0, 0, -20, -15],      // the lower half of a C
-  along:[15, 0, 30, 0, 0],         // parallel to the fingers
 }
 const pose = (f, t, w = [0, 0, 0], moves = false) => ({ f, t, w, moves });
 const fist = [CURL, CURL, CURL, CURL];
-const UPRIGHT_SIDE = [0, -90, 0];  // wrist up, thumb side toward you: for fingers bent sideways
-const SIDEWAYS = [90, 0, 90];   // thumb side toward you, palm down: the drawings' side view, mirrored for a right hand
+// Wrist turns that match the drawings' side views, worked out by rendering candidates next to each drawing.
+const UPRIGHT_SIDE = [173, 84, -180];  // fingers curled toward the right into a C, seen slightly from the thumb side
+const THUMBS_UP = [178, 83, -105];  // thumb up, curled fingers stacked and pointing right, forearm away from you
 
 const POSES = {
-  'ا': pose(fist, T.up, [0, -40, 0]),
-  'أ': pose(fist, T.up, [0, -40, 0]),
-  'إ': pose(fist, T.up, [0, -40, 180], true),
+  'ا': pose(fist, T.out, THUMBS_UP),
+  'أ': pose(fist, T.out, THUMBS_UP),
+  'إ': pose(fist, T.out, [-178, -83, 75], true),  // THUMBS_UP turned upside down
   'ب': pose([UP, CURL, CURL, CURL], T.tuck),
-  'ت': pose([UP, UP, CURL, CURL], T.tuck),
-  'ث': pose([UP, UP, UP, CURL], T.tuck),
-  'ج': pose([CUP, CUP, CUP, CUP], T.c, UPRIGHT_SIDE),
-  'ح': pose([FLAT, FLAT, FLAT, FLAT], T.along, UPRIGHT_SIDE),
-  'خ': pose([[75, 25, 10], [75, 25, 10], [75, 25, 10], [75, 25, 10]], [30, 0, 10, -25, -15], UPRIGHT_SIDE),
-  'د': pose([UP, CURL, CURL, CURL], T.along, SIDEWAYS),
-  'ذ': pose([[20, 45, 25], CURL, CURL, CURL], T.c, SIDEWAYS),
-  'ر': pose([[0, 10, 10], CURL, CURL, CURL], T.tuck, [0, 0, -20]),
-  'ز': pose([UP, [30, 60, 30], CURL, CURL], T.tuck, [0, 0, -25]),
-  'س': pose([UP, UP, UP, UP], T.side),
-  'ش': pose([[0, 0, 0, -12], [0, 0, 0, -3], [0, 0, 0, 5], [0, 0, 0, 14]], T.out),
-  'ص': pose(fist, T.side),
-  'ض': pose(fist, T.out),
-  'ط': pose([UP, FLAT, FLAT, FLAT], T.palm, [0, -40, 0]),
-  'ظ': pose([UP, [80, 60, 20], [80, 60, 20], [80, 60, 20]], T.tuck),
-  'ع': pose([UP, CURL, CURL, CURL], T.tuck, SIDEWAYS),
-  'غ': pose([UP, UP, CURL, CURL], T.tuck, SIDEWAYS),
-  'ف': pose([[20, 90, 60], CURL, CURL, CURL], T.tuck),
-  'ق': pose([[10, 70, 50], [10, 70, 50], CURL, CURL], T.tuck),
-  'ك': pose([UP, UP, UP, UP], T.palm),
+  'ت': pose([[0, 0, 0, 14], [0, 0, 0, 2], CURL, CURL], T.tuck),  // raised fingers pressed together
+  'ث': pose([[0, 0, 0, 13], UP, [0, 0, 0, -10], CURL], T.tuck),  // raised fingers pressed together
+  'ج': pose([[70, 30, 15], [70, 30, 15], [70, 30, 15], [70, 30, 15]], [60, 60, 50, -90, -60], UPRIGHT_SIDE),  // thumb across the palm, into the C, clear of the fingertips, tip bent in toward the palm: seen from the side, its tip is the dot
+  'ح': pose([[63, -4, 9, 20], [65, 6, 9, -2], [62, 10, 0, -19], [54, 11, 1, -41]], [-7, -24, 19, 13, 43], [0, 75, 0]),  // posed by hand in the slider editor
+  'خ': pose([[88, 0, 0, 14], [88, 0, 0, 3], [88, 0, 0, -8], [88, 0, 0, -18]], [2, -2, 17, 3, 4], [0, 75, 0]),  // posed by hand in the slider editor
+  'د': pose([[-3, 32, 5, 0], [95, 110, 80, 0], [95, 110, 80, 0], [95, 110, 80, 0]], [24, -4, 36, -4, 0], [95, 30, -90]),  // posed by hand in the slider editor
+  'ذ': pose([[11, 6, 26, 16], [-17, 44, 26, -27], [95, 110, 80, 0], [95, 110, 80, 0]], [17, -13, 22, 0, 0], [90, 30, -90]),  // posed by hand in the slider editor
+  'ر': pose([[0, 10, 10], CURL, CURL, CURL], T.tuck, [0, 0, 25]),
+  'ز': pose([[29, 10, 0, 25], [11, 35, 30, -23], [95, 110, 80, 0], [95, 110, 80, 0]], [28, -120, 73, 36, -4], [0, 0, 30]),  // posed by hand in the slider editor
+  'س': pose([[-6, -16, 0, 16], [-6, -11, 0, 3], [-6, -14, 0, -8], [-8, -13, 0, -25]], [-15, -33, 19, 11, -11], [0, 0, 0]),  // posed by hand in the slider editor
+  'ش': pose([[0, 0, 0, -4], [0, 0, 0, -3], [0, 0, 0, 1], [0, 0, 0, -6]], [-12, -18, 17, 6, 0], [0, 0, 0]),  // posed by hand in the slider editor
+  'ص': pose([[95, 110, 80, 0], [95, 110, 80, 0], [95, 110, 80, 0], [95, 110, 80, 0]], [11, -47, 22, 16, -16], [0, 0, 0]),  // posed by hand in the slider editor
+  'ض': pose([[95, 110, 80, 0], [95, 110, 80, 0], [95, 110, 80, 0], [95, 110, 80, 0]], [-22, 0, -8, 0, 0], [0, 0, 0]),  // posed by hand in the slider editor
+  'ط': pose([[-5, -19, 0, 0], [91, -2, 0, 0], [91, 0, -8, 0], [88, 0, 14, 0]], [24, -107, 13, 98, -11], [0, 50, 0]),  // posed by hand in the slider editor
+  'ظ': pose([[-5, -19, 0, 0], [91, -2, 0, 0], [91, 0, -8, 0], [88, 0, 14, 0]], [46, -101, 71, -10, -11], [0, 50, 0]),  // same handshape as ط
+  'ع': pose([[0, 0, 0, 21], [0, -6, 0, 6], [95, 110, 80, 0], [95, 110, 80, 0]], [9, -86, 44, 21, 1], [-180, 0, -105]),  // posed by hand in the slider editor
+  'غ': pose([[0, -13, 0, 23], [0, -13, 0, 11], [95, 110, 80, 0], [95, 110, 80, 0]], [84, -120, 71, -8, -11], [-180, 0, -105]),  // posed by hand in the slider editor
+  'ف': pose([[2, 54, 82, 13], [95, 110, 80, 0], [95, 110, 80, 0], [95, 110, 80, 0]], [84, 120, 95, 55, -16], [0, 0, 0]),  // posed by hand in the slider editor
+  'ق': pose([[10, 70, 50, 9], [10, 70, 50, 0], [95, 110, 80, 0], [95, 110, 80, 0]], [67, 120, 95, 48, 0], [0, 0, 0]),  // posed by hand in the slider editor
+  'ك': pose([[0, -21, 0, 14], [0, -21, 0, 3], [0, -21, 0, -6], [0, -21, 0, -21]], [120, 120, 120, 103, -2], [0, 0, 0]),  // posed by hand in the slider editor
   'ل': pose([UP, CURL, CURL, CURL], T.out),
-  'م': pose([UP, CURL, CURL, CURL], [70, 0, 75, -50, -40]),
-  'ن': pose([[0, 15, 25], CURL, CURL, CURL], [0, 0, 0, 0, -10]),
+  'م': pose([[95, 110, 80, 0], [95, 110, 80, 0], [95, 110, 80, 0], [0, 0, 0, -20]], [70, 0, 75, -50, -40], [0, 0, 0]),  // posed by hand in the slider editor
+  'ن': pose([[-2, 52, 46, 0], [120, 117, 80, 0], [120, 110, 80, 0], [120, 110, 80, 0]], [8, 14, 6, 6, 12], [-85, -3, -102]),  // posed by hand in the slider editor
   'ه': pose([[15, 20, 10, -10], [15, 20, 10, -3], [15, 20, 10, 4], [15, 20, 10, 12]], T.out, [0, 0, 0], true),
-  'و': pose(fist, T.tuck, [-70, 0, 30]),
-  'ؤ': pose(fist, T.tuck, [-70, 0, 30], true),
+  'و': pose([[95, 69, 63, 0], [95, 81, 80, 0], [95, 67, 80, 0], [95, 76, 80, 0]], [73, -67, 61, 11, -11], [72, 32, 102]),  // posed by hand in the slider editor
+  'ؤ': pose([[95, 69, 66, 0], [95, 81, 80, 0], [95, 67, 80, 0], [95, 76, 80, 0]], [73, -69, 60, 11, -11], [72, 32, 102], true),  // posed by hand in the slider editor
   'ي': pose([CURL, CURL, CURL, [0, 0, 0, 15]], T.out),
   'ئ': pose([CURL, CURL, CURL, [0, 0, 0, 15]], T.out, [0, 0, 0], true),
   'ة': pose([[10, 60, 40], [10, 60, 40], CURL, CURL], T.tuck, [0, 0, 0], true),
   'ء': pose([UP, CURL, CURL, CURL], T.tuck, [0, 0, 0], true),
 };
 
-// ── The hand: the WebXR generic right hand (MIT, Amazon), toon-shaded with an ink outline ──
+// ── The hand: Blender Studio's realistic base-mesh hand (CC0), rigged with WebXR joint names
+// by tool/rig_hand.py and shaded as grey sculpting clay ──
 // Its bones all hang off the armature, so link them into chains first; then bending a
 // knuckle carries the rest of the finger with it.
-const SIZE = 13;  // The model is a real hand in metres; the scene is ~2 units tall.
+const SIZE = 11.5;  // The model is a real hand in metres, wrist at the origin; this makes it ~2.7 units tall.
+const PIVOT = 0.8;  // mid-palm height: wrist turns spin the hand about this, so it stays in frame
 const hand = new THREE.Group();
+hand.position.y = PIVOT;
 const FINGER_NAMES = ['index', 'middle', 'ring', 'pinky'];
 let rig = null;  // filled once the model loads
 
@@ -156,24 +156,14 @@ new GLTFLoader().load('models/right-hand.glb', (gltf) => {
 
   root.traverse((o) => {
     if (!o.isSkinnedMesh) return;
-    o.material = new THREE.MeshToonMaterial({ color: 0xffffff });
-    const outline = new THREE.SkinnedMesh(o.geometry, inkMaterial());
-    outline.bind(o.skeleton, o.bindMatrix);
-    o.parent.add(outline);
-    o.frustumCulled = outline.frustumCulled = false;  // skinned bounds don't follow the bent fingers
+    o.geometry.computeVertexNormals();  // smooth shading, like a sculpt
+    o.material = new THREE.MeshPhysicalMaterial({ color: 0xb8b8b4, roughness: 0.6, sheen: 0.3, sheenRoughness: 0.6, sheenColor: 0xffffff });  // matte grey clay
+    o.frustumCulled = false;  // skinned bounds don't follow the bent fingers
   });
   root.scale.setScalar(SIZE);
+  root.position.y = -PIVOT;  // wrist at the origin of the model, palm centre at the pivot
   hand.add(root);
 });
-
-// Inverted hull: the same skinned mesh pushed out along its normals, back faces only, in black.
-function inkMaterial() {
-  const m = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.BackSide });
-  m.onBeforeCompile = (shader) => {
-    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed += normalize(objectNormal) * 0.0012;');
-  };
-  return m;
-}
 
 // ── Animate between poses by easing every angle toward the target ────────────
 const flat = (p) => [...p.f.flatMap((d) => [d[0], d[1], d[2], d[3] ?? 0]), ...p.t, ...p.w];
@@ -209,23 +199,32 @@ function apply(a) {
 const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });  // transparent: the stage colour shows through
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
 stage.prepend(renderer.domElement);
 const scene = new THREE.Scene();
-scene.add(hand, new THREE.AmbientLight(0xffffff, 1.6));
-const sun = new THREE.DirectionalLight(0xffffff, 2.2);
-sun.position.set(2, 3, 4);
-scene.add(sun);
+// Studio lighting: a soft room for the fill, a key from above-front, a rim from behind to edge the silhouette.
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.35;
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.position.set(2.5, 3, 3);
+const rim = new THREE.DirectionalLight(0xffffff, 1.4);
+rim.position.set(-3, 2, -4);
+const fill = new THREE.DirectionalLight(0xffffff, 0.9);
+fill.position.set(-1, -3, 3);  // from below: fingers bent toward you turn their pads down, away from the key
+scene.add(hand, key, rim, fill);
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
-camera.position.set(0, 0.3, 6);
+camera.position.set(0, 0.8, 6);  // aim at the middle of the hand, not the wrist
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.enablePan = false;
 controls.minDistance = 3.5;
 controls.maxDistance = 9;
-controls.target.set(0, 0.3, 0);
+controls.target.set(0, 0.8, 0);
 controls.autoRotate = true;
 controls.autoRotateSpeed = 1.5;
-controls.addEventListener('start', () => (controls.autoRotate = false));
+const HOME = camera.position.clone();  // straight on, as the letter drawings show it
+let homing = false;  // gliding back to HOME after a letter is picked
+controls.addEventListener('start', () => (controls.autoRotate = homing = false));
 
 new ResizeObserver(() => {
   const s = stage.clientWidth;
@@ -235,6 +234,10 @@ new ResizeObserver(() => {
 renderer.setAnimationLoop(() => {
   current = current.map((v, i) => v + (target[i] - v) * 0.12);
   apply(current);
+  if (homing) {
+    camera.position.lerp(HOME, 0.12);
+    if (camera.position.distanceTo(HOME) < 0.01) homing = false;
+  }
   controls.update();
   renderer.render(scene, camera);
 });
@@ -248,7 +251,11 @@ order.forEach((letter, i) => {
   b.textContent = letter;
   b.setAttribute('aria-label', `Show the handshape for ${letter}`);
   if (POSES[letter].moves) b.classList.add('moves');
-  b.onclick = () => show(letter, i);
+  b.onclick = () => {
+    show(letter, i);
+    controls.autoRotate = false;
+    homing = true;
+  };
   buttons.append(b);
 });
 function show(letter, i) {
@@ -258,7 +265,17 @@ function show(letter, i) {
   [...buttons.children].forEach((b) => b.setAttribute('aria-pressed', b.textContent === letter));
 }
 show('ب', order.indexOf('ب'));
-window.signs3d = { show: (l) => show(l, order.indexOf(l)), controls, POSES, T, set: (p) => (target = flat(p)) };  // for trying poses from the console
+// Snap to the target pose, render it straight on and return it as a PNG data URL: for comparing poses with the drawings.
+function shot() {
+  current = [...target];
+  apply(current);
+  controls.autoRotate = homing = false;
+  camera.position.copy(HOME);
+  controls.update();
+  renderer.render(scene, camera);
+  return renderer.domElement.toDataURL();
+}
+window.signs3d = { show: (l) => show(l, order.indexOf(l)), controls, POSES, T, set: (p) => (target = flat(p)), shot };  // for trying poses from the console
 </script>
 </body>
 </html>
